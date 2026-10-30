@@ -478,7 +478,6 @@ local SalvagingTable = {
 		[JMod.EZ_RESOURCE_TYPES.ORGANICS] = .1
 	},
 	strider = {
-		[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = .1,
 		[JMod.EZ_RESOURCE_TYPES.ORGANICS] = .1,
 		[JMod.EZ_RESOURCE_TYPES.TITANIUM] = .2,
 		[JMod.EZ_RESOURCE_TYPES.CERAMIC] = .1
@@ -786,7 +785,7 @@ function JMod.GetSalvageYield(ent)
 
 	if not IsValid(Phys) then return {}, "cannot salvage: invalid physics" end
 
-	local Mat, Mass = string.lower(Phys:GetMaterial()), Phys:GetMass()
+	local Mat, Mass = string.lower(Phys:GetMaterial())
 
 	if not (Mat and Mass and (Mass > 0)) then return {}, "cannot salvage: corrupt physics" end
 
@@ -876,7 +875,7 @@ function JMod.GetSalvageYield(ent)
 
 	for k, v in pairs(Info) do
 		if ScaleByMass then
-			Results[k] = math.ceil(v * Mass * 1.5 * JMod.Config.ResourceEconomy.SalvageYield)
+			Results[k] = math.ceil(v * 1.5 * JMod.Config.ResourceEconomy.SalvageYield)
 		else
 			Results[k] = math.ceil(v * .9)
 		end
