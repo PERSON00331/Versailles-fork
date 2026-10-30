@@ -787,7 +787,7 @@ function JMod.GetSalvageYield(ent)
 
 	if not IsValid(Phys) then return {}, "cannot salvage: invalid physics" end
 
-	local Mat, Mass = string.lower(Phys:GetMaterial())
+	local Mat, Mass = string.lower(Phys:GetMaterial()), Phys:GetMass()
 
 	if not (Mat and Mass and (Mass > 0)) then return {}, "cannot salvage: corrupt physics" end
 
