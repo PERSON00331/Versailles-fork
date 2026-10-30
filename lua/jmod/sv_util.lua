@@ -589,18 +589,18 @@ function JMod.EZprogressTask(ent, pos, deconstructor, task, mult)
 	local CancelTaskMessage = hook.Run("JMod_EZprogressTask", ent, pos, deconstructor, task, mult)
 
 	if CancelTaskMessage ~= nil then
-
 		return CancelTaskMessage
 	end
 
 	if ent:GetNW2Float("EZcancel"..task.."Time", 0) <= Time then
 		ent:SetNW2Float("EZ"..task.."Progress", 0)
 	end
+
 	ent:SetNW2Float("EZcancel"..task.."Time", Time + 3)
-	
+
 	local Prog = ent:GetNW2Float("EZ"..task.."Progress", 0)
 	local Phys = ent:GetPhysicsObject()
-	
+
 	if IsValid(Phys) then
 		local WorkSpreadMult = JMod.CalcWorkSpreadMult(ent, pos)
 
@@ -608,70 +608,99 @@ function JMod.EZprogressTask(ent, pos, deconstructor, task, mult)
 			if constraint.HasConstraints(ent) or not Phys:IsMotionEnabled() then
 				local Mass = Phys:GetMass() ^ .8
 				local AddAmt = 300 / Mass * WorkSpreadMult * JMod.Config.Tools.Toolbox.DeconstructSpeedMult
+
 				ent:SetNW2Float("EZ"..task.."Progress", math.Clamp(Prog + AddAmt, 0, 100))
 
 				if Prog >= 100 then
 					sound.Play("snds_jack_gmod/ez_tools/hit.ogg", pos + VectorRand(), 70, math.random(50, 60))
+
 					constraint.RemoveAll(ent)
 					Phys:EnableMotion(true)
 					Phys:Wake()
+
 					ent:SetNW2Float("EZ"..task.."Progress", 0)
+
 					if ent.EZnails then
 						for _, v in ipairs(ent.EZnails) do
 							if IsValid(v) then
 								v:Remove()
 							end
 						end
+
 						ent.EZnails = {}
 					end
 				end
 			else
 				return "object is already unconstrained"
 			end
+
 		elseif task == "salvage" then
 			if constraint.HasConstraints(ent) or not Phys:IsMotionEnabled() then
 				return "object must be loosened first"
 			else
-				local Mass = (Phys:GetMass() * ent:GetPhysicsObjectCount()) ^ .8
 				ent:ForcePlayerDrop()
+
+				
+				if not istable(ent.JModOriginalMasses) then
+					ent.JModOriginalMasses = {}
+
+					for i = 0, ent:GetPhysicsObjectCount() - 1 do
+						local PhysObj = ent:GetPhysicsObjectNum(i)
+
+						if IsValid(PhysObj) then
+							ent.JModOriginalMasses[i] = PhysObj:GetMass()
+						end
+					end
+				end
+
 				local Yield, Message = JMod.GetSalvageYield(ent)
 
-				if #table.GetKeys(Yield) <= 0 then
-					return Message
-				else
-					local AddAmt = 250 / Mass * WorkSpreadMult * JMod.Config.Tools.Toolbox.DeconstructSpeedMult
-					ent:SetNW2Float("EZ"..task.."Progress", math.Clamp(Prog + AddAmt, 0, 100))
-					
-					if Prog >= 100 then
-						sound.Play("snds_jack_gmod/ez_tools/hit.ogg", pos + VectorRand(), 70, math.random(50, 60))
+				
+				if not istable(Yield) or table.Count(Yield) <= 0 then
+					return Message or "nothing to salvage"
+				end
 
-						for k, v in pairs(Yield) do
-							local AmtLeft = v
+				
+				JMod.SalvagingMassEntities = JMod.SalvagingMassEntities or {}
+				JMod.SalvagingMassEntities[ent] = CurTime()
 
-							while AmtLeft > 0 do
-								local Remove = math.min(AmtLeft, 100 * JMod.Config.ResourceEconomy.MaxResourceMult)
-								local Ent = ents.Create(JMod.EZ_RESOURCE_ENTITIES[k])
-								Ent:SetPos(pos + VectorRand() * 40 + Vector(0, 0, 30))
-								Ent:SetAngles(AngleRand())
-								Ent:Spawn()
-								Ent:Activate()
-								Ent:SetEZsupplies(k, Remove)
-								JMod.SetEZowner(Ent, deconstructor)
-								timer.Simple(.1, function()
-									if (IsValid(Ent) and IsValid(Ent:GetPhysicsObject())) then 
-										Ent:GetPhysicsObject():SetVelocity(Vector(0, 0, 0)) --- This is so jank
-									end
-								end)
-								AmtLeft = AmtLeft - Remove
-							end
+				local Mass = (Phys:GetMass() * math.max(ent:GetPhysicsObjectCount(), 1)) ^ .8
+				local AddAmt = 250 / Mass * WorkSpreadMult * JMod.Config.Tools.Toolbox.DeconstructSpeedMult
+
+				ent:SetNW2Float("EZ"..task.."Progress", math.Clamp(Prog + AddAmt, 0, 100))
+
+				if Prog >= 100 then
+					sound.Play("snds_jack_gmod/ez_tools/hit.ogg", pos + VectorRand(), 70, math.random(50, 60))
+
+					for k, v in pairs(Yield) do
+						local AmtLeft = v
+
+						while AmtLeft > 0 do
+							local Remove = math.min(AmtLeft, 100 * JMod.Config.ResourceEconomy.MaxResourceMult)
+							local Ent = ents.Create(JMod.EZ_RESOURCE_ENTITIES[k])
+
+							if not IsValid(Ent) then break end
+
+							Ent:SetPos(pos + VectorRand() * 40 + Vector(0, 0, 30))
+							Ent:SetAngles(AngleRand())
+							Ent:Spawn()
+							Ent:Activate()
+							Ent:SetEZsupplies(k, Remove)
+
+							JMod.SetEZowner(Ent, deconstructor)
+
+							timer.Simple(.1, function()
+								if IsValid(Ent) and IsValid(Ent:GetPhysicsObject()) then
+									Ent:GetPhysicsObject():SetVelocity(Vector(0, 0, 0))
+								end
+							end)
+
+							AmtLeft = AmtLeft - Remove
 						end
-						--[[if ent.JModInv then
-							for _, v in ipairs(ent.JModInv.items) do
-								JMod.RemoveFromInventory(ent, v.ent, pos + VectorRand() * 50)
-							end
-						end--]]
-						SafeRemoveEntity(ent)
 					end
+
+					JMod.SalvagingMassEntities[ent] = nil
+					SafeRemoveEntity(ent)
 				end
 			end
 		end

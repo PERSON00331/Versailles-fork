@@ -775,10 +775,6 @@ function JMod.GetSalvageYield(ent)
 
 	local Class, Mdl = string.lower(ent:GetClass()), string.lower(ent:GetModel())
 
-	if not ent.JModScrounged then
-		return {}, "only props found by scrounging can be salvaged"
-	end
-
 	local PhysNum = ent:GetPhysicsObjectCount()
 	local Phys = ent:GetPhysicsObject()
 
@@ -788,26 +784,38 @@ function JMod.GetSalvageYield(ent)
 
 	local Mat = string.lower(Phys:GetMaterial())
 
-	if not istable(ent.JModOriginalMasses) then
-		return {}, "cannot salvage: missing original mass"
-	end
-
 	local Mass = 0
 
-	for _, OriginalMass in pairs(ent.JModOriginalMasses) do
-		if isnumber(OriginalMass) and OriginalMass > 0 then
-			Mass = Mass + OriginalMass
-		end
-	end
+	
+	if istable(ent.JModOriginalMasses) then
+    	
+    	for _, OriginalMass in pairs(ent.JModOriginalMasses) do
+        if isnumber(OriginalMass) and OriginalMass > 0 then
+            Mass = Mass + OriginalMass
+        end
+    end
 
-	if Mass <= 0 then
-		return {}, "cannot salvage: invalid original mass"
-	end
+else
+    for i = 0, PhysNum - 1 do
+        local PhysObj = ent:GetPhysicsObjectNum(i)
+
+        if IsValid(PhysObj) then
+            local OriginalMass = PhysObj:GetMass()
+
+            if isnumber(OriginalMass) and OriginalMass > 0 then
+                Mass = Mass + OriginalMass
+            end
+        end
+    end
+end
+
+if Mass <= 0 then
+    return {}, "cannot salvage: invalid physics mass"
+end
 
 	if Mass > 35 then
-		Mass = math.ceil(Mass ^ .9)
+    Mass = math.ceil(Mass ^ .9)
 	end
-
 
 	-- again, more corrections
 	if Class == "func_physbox" then
@@ -879,7 +887,7 @@ function JMod.GetSalvageYield(ent)
 	end
 
 	local Results = {}
-
+	JMod.SalvagingMassEntities = JMod.SalvagingMassEntities or {}
 	for k, v in pairs(Info) do
 	if ScaleByMass then
     	Results[k] = math.ceil(v * Mass * 1.5 * JMod.Config.ResourceEconomy.SalvageYield)
@@ -1622,9 +1630,17 @@ if SERVER then
 		end
 	end, nil, "Removes one or more natural resource deposits")--]]
 
-timer.Create("JMod_EnforceScroungedMass", 0.25, 0, function() -- 0.25 so its semi-optimized
-    for _, Ent in ipairs(ents.GetAll()) do
-        if IsValid(Ent) and Ent.JModScrounged and istable(Ent.JModOriginalMasses) then
+JMod.SalvagingMassEntities = JMod.SalvagingMassEntities or {}
+
+timer.Create("Massfix", 0.25, 0, function()
+    for Ent, LastSalvage in pairs(JMod.SalvagingMassEntities) do
+        if not IsValid(Ent) then
+            JMod.SalvagingMassEntities[Ent] = nil
+
+        elseif CurTime() - LastSalvage > 3 then
+            JMod.SalvagingMassEntities[Ent] = nil
+
+        elseif istable(Ent.JModOriginalMasses) then
             for Index, OriginalMass in pairs(Ent.JModOriginalMasses) do
                 local Phys = Ent:GetPhysicsObjectNum(Index)
 
