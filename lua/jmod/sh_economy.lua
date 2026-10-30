@@ -781,6 +781,8 @@ function JMod.GetSalvageYield(ent)
 		end
 	end
 
+	if not ent.JModScrounged then return {}, "only props found by scrounging can be salvaged" end
+
 	local PhysNum = ent:GetPhysicsObjectCount()
 	local Phys = ent:GetPhysicsObject()
 
@@ -1362,9 +1364,11 @@ if SERVER then
 			["models/nova/chair_wood01.mdl"] = 1,
 			["models/props_junk/cardboard_box004a.mdl"] = 1,
 			["models/props_c17/metalpot002a.mdl"] = 1,
+			["models/props_c17/oildrum001.mdl"] = .5,
 			["models/props_debris/wood_chunk06a.mdl"] = 1,
 			["models/props_interiors/pot01a.mdl"] = 2,
 			["models/props_interiors/pot02a.mdl"] = 2,
+			["models/props_wasteland/laundry_washer001a.mdl"] = .25,
 			["models/jmod_scrounge/garbage_coffeemug001a_jmod.mdl"] = 1,
 			["models/jmod_scrounge/garbage_glassbottle001a_jmod.mdl"] = 2,
 			["models/props_junk/garbage_milkcarton001a.mdl"] = 3,
@@ -1525,6 +1529,7 @@ if SERVER then
 						Loot:SetAngles(AngleRand())
 						Loot:Spawn()
 						Loot:Activate()
+						Loot.JModScrounged = true
 						JMod.SetEZowner(Loot, ply)
 						SpawnedItems = SpawnedItems + 1
 						LastEnv = EnvironmentType

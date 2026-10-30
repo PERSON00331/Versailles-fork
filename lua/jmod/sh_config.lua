@@ -111,7 +111,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			ScroungeAreaRefreshMult = 1,
 			ScroungeCooldownMult = 1,
 			ScroungeDespawnTimeMult = 1,
-			ScroungeResultAmount = 5,
+			ScroungeResultAmount = 8,
 			ForceLoadAllResources = true,
 			GrowthSpeedMult = 1,
 			WaterRequirementMult = 1
