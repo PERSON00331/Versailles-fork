@@ -79,16 +79,62 @@ function JMod.GetEZowner(ent)
 	end
 end
 
-function JMod.SetEZowner(ent, newOwner, setColor)
+local EZMachineClaimTime = 3
+
+function JMod.SetEZowner(ent, newOwner, setColor, skipClaim)
 	if not IsValid(ent) then return end
 	if not (newOwner and IsValid(newOwner)) then newOwner = game.GetWorld() end
 
-	if JMod.GetEZowner(ent) == newOwner then
+	local CurrentOwner = JMod.GetEZowner(ent)
+
+	if CurrentOwner == newOwner then
 		if setColor == true then
 			JMod.Colorify(ent)
 		end
 
 		return 
+	end
+
+	if not skipClaim and ent.IsJackyEZmachine and CurrentOwner:IsPlayer() and newOwner:IsPlayer() and newOwner:KeyDown(IN_USE) then
+		local Trace = newOwner:GetEyeTrace()
+		if Trace.Entity == ent and newOwner:GetPos():DistToSqr(ent:GetPos()) <= 150 * 150 then
+			if ent.JModOwnerClaim then return end
+
+			local Claim = {
+				player = newOwner,
+				owner = CurrentOwner,
+				started = CurTime(),
+				timer = "JModOwnerClaim_" .. ent:EntIndex() .. "_" .. math.random(1, 1000000000)
+			}
+			ent.JModOwnerClaim = Claim
+			newOwner:PrintMessage(HUD_PRINTCENTER, "Hold USE for 3 seconds to claim this machine")
+
+			timer.Create(Claim.timer, 0.1, 0, function()
+				if not IsValid(ent) or ent.JModOwnerClaim ~= Claim then
+					timer.Remove(Claim.timer)
+					return
+				end
+
+				local Claimant = Claim.player
+				if not IsValid(Claimant) or not Claimant:Alive() or not Claimant:KeyDown(IN_USE)
+					or JMod.GetEZowner(ent) ~= Claim.owner
+					or Claimant:GetPos():DistToSqr(ent:GetPos()) > 150 * 150
+					or Claimant:GetEyeTrace().Entity ~= ent then
+					ent.JModOwnerClaim = nil
+					timer.Remove(Claim.timer)
+					return
+				end
+
+				if CurTime() - Claim.started >= EZMachineClaimTime then
+					ent.JModOwnerClaim = nil
+					timer.Remove(Claim.timer)
+					JMod.SetEZowner(ent, Claimant, setColor, true)
+					Claimant:PrintMessage(HUD_PRINTCENTER, "Machine claimed")
+				end
+			end)
+
+			return
+		end
 	end
 
 	ent.EZowner = newOwner
