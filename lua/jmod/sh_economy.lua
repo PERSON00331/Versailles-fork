@@ -759,9 +759,10 @@ function JMod.GetSalvageYield(ent)
 	if not IsValid(ent) then return {}, "" end
 	if ent.GetState and (ent:GetState() >= 1) then return {}, "bruh, it's active" end
 
-	local Class, Mdl = string.lower(ent:GetClass()), string.lower(ent:GetModel())
+	if table.HasValue(BlacklistedGroups, bit.band(ent:GetCollisionGroup(), BlacklistedBor)) then
+		return {}, "cannot salvage: bad collision group"
+	end
 
-	if table.HasValue(BlacklistedGroups, bit.band(ent:GetCollisionGroup(), BlacklistedBor)) then return {}, "cannot salvage: bad collision group" end
 	if ent:IsWorld() then return {}, "can't salvage the world" end
 
 	if ent:GetClass() == "ent_jack_gmod_ezcompactbox" then
@@ -772,29 +773,41 @@ function JMod.GetSalvageYield(ent)
 		end
 	end
 
-	if not ent.JModScrounged then return {}, "only props found by scrounging can be salvaged" end
+	local Class, Mdl = string.lower(ent:GetClass()), string.lower(ent:GetModel())
+
+	if not ent.JModScrounged then
+		return {}, "only props found by scrounging can be salvaged"
+	end
 
 	local PhysNum = ent:GetPhysicsObjectCount()
 	local Phys = ent:GetPhysicsObject()
 
-	if not IsValid(Phys) then return {}, "cannot salvage: invalid physics" end
+	if not IsValid(Phys) then
+		return {}, "cannot salvage: invalid physics"
+	end
 
-	local Mat, Mass = string.lower(Phys:GetMaterial()), Phys:GetMass()
+	local Mat = string.lower(Phys:GetMaterial())
 
-	if not (Mat and Mass and (Mass > 0)) then return {}, "cannot salvage: corrupt physics" end
+	if not istable(ent.JModOriginalMasses) then
+		return {}, "cannot salvage: missing original mass"
+	end
 
-	local RagMass = nil
+	local Mass = 0
 
-	if PhysNum > 1 then
-		for i = 1, PhysNum do
-			local RagPhys = ent:GetPhysicsObjectNum(i - 1)
-			if not IsValid(RagPhys) then break end
-			RagMass = (RagMass or 0) + RagPhys:GetMass()
+	for _, OriginalMass in pairs(ent.JModOriginalMasses) do
+		if isnumber(OriginalMass) and OriginalMass > 0 then
+			Mass = Mass + OriginalMass
 		end
 	end
-	if Mass > 35 then
-		Mass = math.ceil((RagMass or Mass) ^ .9) -- exponent to keep yield from stupidheavy objects from ruining the game
+
+	if Mass <= 0 then
+		return {}, "cannot salvage: invalid original mass"
 	end
+
+	if Mass > 35 then
+		Mass = math.ceil(Mass ^ .9)
+	end
+
 
 	-- again, more corrections
 	if Class == "func_physbox" then
@@ -868,11 +881,11 @@ function JMod.GetSalvageYield(ent)
 	local Results = {}
 
 	for k, v in pairs(Info) do
-		if ScaleByMass then
-			Results[k] = math.ceil(v * 1.5 * JMod.Config.ResourceEconomy.SalvageYield)
-		else
-			Results[k] = math.ceil(v * .9)
-		end
+	if ScaleByMass then
+    	Results[k] = math.ceil(v * Mass * 1.5 * JMod.Config.ResourceEconomy.SalvageYield)
+	else
+    	Results[k] = math.ceil(v * .9)
+	end
 		if ent.LVS and ent.ExplodedAlready then
 			Results[k] = Results[k] * .5
 		end
@@ -1513,6 +1526,7 @@ if SERVER then
 							InsertIntoInv = true
 						end
 						debugoverlay.Line(ConeTr.HitPos + ConeTr.HitNormal * 5, PosSetTr.HitPos, 5, Color(0, 255, 0), true)
+						if not IsValid(Loot) then continue end
 						local Mins, Maxs = Loot:GetCollisionBounds()
 						local BBVec = Maxs - Mins
 						local SpawnHeight = math.max(BBVec.x, BBVec.y, BBVec.z)
@@ -1520,8 +1534,20 @@ if SERVER then
 						Loot:SetAngles(AngleRand())
 						Loot:Spawn()
 						Loot:Activate()
+
+						Loot.JModOriginalMasses = {}
+
+						for i = 0, Loot:GetPhysicsObjectCount() - 1 do
+    					local Phys = Loot:GetPhysicsObjectNum(i)
+
+    					if IsValid(Phys) then
+        				Loot.JModOriginalMasses[i] = Phys:GetMass()
+    					end
+					end
+
 						Loot.JModScrounged = true
 						JMod.SetEZowner(Loot, ply)
+
 						SpawnedItems = SpawnedItems + 1
 						LastEnv = EnvironmentType
 						
@@ -1596,6 +1622,22 @@ if SERVER then
 		end
 	end, nil, "Removes one or more natural resource deposits")--]]
 
+timer.Create("JMod_EnforceScroungedMass", 0.25, 0, function() -- 0.25 so its semi-optimized
+    for _, Ent in ipairs(ents.GetAll()) do
+        if IsValid(Ent) and Ent.JModScrounged and istable(Ent.JModOriginalMasses) then
+            for Index, OriginalMass in pairs(Ent.JModOriginalMasses) do
+                local Phys = Ent:GetPhysicsObjectNum(Index)
+
+                if IsValid(Phys) and isnumber(OriginalMass) then
+                    if math.abs(Phys:GetMass() - OriginalMass) > 0.01 then
+                        Phys:SetMass(OriginalMass)
+                    end
+                end
+            end
+        end
+    end
+end)
+
 elseif CLIENT then
 	local ShowNaturalResources = false
 	local NaturalResourceDisplayCache = {}
@@ -1659,3 +1701,4 @@ elseif CLIENT then
 		end
 	end)
 end
+
