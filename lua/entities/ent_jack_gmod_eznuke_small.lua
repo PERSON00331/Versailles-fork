@@ -180,6 +180,7 @@ if SERVER then
 			local Eff = EffectData()
 			Eff:SetOrigin(SelfPos)
 			util.Effect("eff_jack_gmod_tinynukeflash", Eff, true, true)
+			util.Effect("eff_jack_gmod_nanocloud", Eff, true, true)
 		end)
 
 		---

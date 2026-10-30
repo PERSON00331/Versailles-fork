@@ -183,6 +183,32 @@ function JMod.BlastDamageIgnoreWorld(pos, att, infl, dmg, range)
 	end
 end
 
+function JMod.IsBuildmodeProtectedProp(ent)
+	if not IsValid(ent) or ent:IsPlayer() then return false end
+
+	local Owner
+	if CPPI and isfunction(ent.CPPIGetOwner) then
+		Owner = ent:CPPIGetOwner()
+	end
+	if not IsValid(Owner) then
+		Owner = JMod.GetEZowner(ent)
+	end
+
+	return IsValid(Owner) and Owner:IsPlayer() and Owner:GetNWBool("_Kyle_Buildmode", false)
+end
+
+hook.Add("EntityTakeDamage", "JMod_BuildmodePropProtection", function(ent)
+	if JMod.IsBuildmodeProtectedProp(ent) then return true end
+end)
+
+hook.Add("ACF_PreDamageEntity", "JMod_BuildmodePropProtection", function(ent)
+	if JMod.IsBuildmodeProtectedProp(ent) then return false end
+end)
+
+hook.Add("DakTankDamageCheck", "JMod_BuildmodePropProtection", function(hitEnt)
+	if JMod.IsBuildmodeProtectedProp(hitEnt) then return false end
+end)
+
 local WreckBlacklist = {"gmod_lamp", "gmod_cameraprop", "gmod_light", "ent_jack_gmod_nukeflash", "ent_jack_gmod_ezoilfire"}
 
 function JMod.WreckBuildings(blaster, pos, power, range, ignoreVisChecks)
@@ -194,6 +220,8 @@ function JMod.WreckBuildings(blaster, pos, power, range, ignoreVisChecks)
 	local allProps = ents.FindInSphere(pos, maxRange)
 
 	for k, prop in pairs(allProps) do
+		if JMod.IsBuildmodeProtectedProp(prop) then continue end
+
 		local canDestroy = hook.Run("JMod_CanDestroyProp", prop, blaster, pos, power, range, ignoreVisChecks) ~= false
 		if not (table.HasValue(WreckBlacklist, prop:GetClass()) or (prop:IsNPC() or prop:IsPlayer()) or (prop.ExplProof == true) or canDestroy) then
 			local physObj = prop:GetPhysicsObject()
