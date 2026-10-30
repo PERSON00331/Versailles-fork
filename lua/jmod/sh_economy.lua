@@ -233,14 +233,6 @@ JMod.ResourceDepositInfo = {
 			rock = 2
 		}
 	},
-	[JMod.EZ_RESOURCE_TYPES.DIAMOND] = {
-		dependency = JMod.EZ_RESOURCE_TYPES.COAL,
-		frequency = .2,
-		avgamt = 80,
-		avgsize = 100,
-		limits = {}, -- covered by the limits of coal already
-		boosts = {}
-	},
 	["geothermal"] = {
 		frequency = 2,
 		avgrate = .5,
@@ -1346,6 +1338,22 @@ if SERVER then
 
 	function JMod.DepleteNaturalResource(key, amt)
 		local Tab = JMod.NaturalResourceTable[key]
+		if Tab.typ == JMod.EZ_RESOURCE_TYPES.COAL then 
+		-- roughly 2% chance of getting diamonds (it might be la peace tho)
+		if math.random(1,100) <= 5 then
+			local DiamondAmount = math.random(1,3) -- i hope u get 3 
+
+			table.insert(JMod.NaturalResourceTable, {
+            typ = JMod.EZ_RESOURCE_TYPES.DIAMOND,
+            pos = Tab.pos,
+             siz = 50,
+             amt = DiamondAmount
+            })
+		end
+
+
+
+		end
 		if not Tab then return end
 		if Tab.rate then return end
 		Tab.amt = math.Round(Tab.amt - amt, 4)
