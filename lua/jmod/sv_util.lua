@@ -485,10 +485,12 @@ function JMod.EZprogressMining(ent, pos, deconstructor, mult, surfaceMat)
 	
 	ent:SetNW2Float("EZminingProgress", math.Clamp(Prog + AddAmt, 0, 100))
 	
-	-- Check if mining is complete first (before checking >= 10)
+	-- is progress complete?
 	if Prog >= 100 then
 		local AmtToProduce
 		local ResourceType
+
+		
 		
 		if DepositInfo then
 			-- Mining a deposit
@@ -498,9 +500,6 @@ function JMod.EZprogressMining(ent, pos, deconstructor, mult, surfaceMat)
 			else
 				local AmtLeft = DepositInfo.amt
 				AmtToProduce = math.min(AmtLeft, math.random(5, 20))
-				if (DepositInfo.typ == JMod.EZ_RESOURCE_TYPES.DIAMOND) then
-					AmtToProduce = math.min(AmtLeft, math.random(1, 2))
-				end
 				JMod.DepleteNaturalResource(DepositKey, AmtToProduce)
 			end
 			ResourceType = DepositInfo.typ
@@ -515,6 +514,14 @@ function JMod.EZprogressMining(ent, pos, deconstructor, mult, surfaceMat)
 
 		local SpawnPos = ent:WorldToLocal(pos + Vector(0, 0, 8))
 		JMod.MachineSpawnResource(ent, ResourceType, AmtToProduce, SpawnPos, Angle(0, 0, 0), SpawnPos, 100)
+
+		-- diamonds
+		if ResourceType == JMod.EZ_RESOURCE_TYPES.COAL then
+    		if math.random(1, 100) <= 7 then
+       		local DiamondAmount = math.random(1,4) -- 7 percent for 1-4 diamonds
+        	JMod.MachineSpawnResource(ent,JMod.EZ_RESOURCE_TYPES.DIAMOND,DiamondAmount,SpawnPos,Angle(0, 0, 0),SpawnPos,100)
+   			 end
+		end
 		ent:SetNW2Float("EZminingProgress", 0)
 		ent.EZpreviousMiningPos = nil
 		JMod.ResourceEffect(ResourceType, pos, nil, 1, 1, 1, 5)
