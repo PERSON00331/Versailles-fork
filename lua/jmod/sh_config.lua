@@ -1165,10 +1165,10 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			["EZ Micro Black Hole Generator"] = {
 				results = "ent_jack_gmod_ezmbhg",
 				craftingReqs = {
-					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 400,
-					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 125,
-					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 200,
-					[JMod.EZ_RESOURCE_TYPES.POWER] = 500,
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 600,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 325,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 400,
+					[JMod.EZ_RESOURCE_TYPES.POWER] = 700,
 					[JMod.EZ_RESOURCE_TYPES.ANTIMATTER] = 90
 				},
 				sizeScale = 2,
@@ -1300,10 +1300,10 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			["EZ Thermonuclear Bomb"] = {
 				results = "ent_jack_gmod_eznuke_big",
 				craftingReqs = {
-					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 1200,
-					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 900,
-					[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 1400,
-					[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 1100
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 2000,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 1700,
+					[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 2200,
+					[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 1900
 				},
 				sizeScale = 1,
 				category = "Explosives",
@@ -2972,6 +2972,52 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 		error("JMod.Config is missing or is corrupt")
 
 		return
+	end
+
+	local function MigrateRecipe(name, oldRequirements, newRequirements)
+		local recipe = JMod.Config.Craftables and JMod.Config.Craftables[name]
+		if not recipe or not istable(recipe.craftingReqs) then return false end
+
+		local requirements = recipe.craftingReqs
+		for resource, amount in pairs(oldRequirements) do
+			if requirements[resource] ~= amount then return false end
+		end
+		for resource in pairs(requirements) do
+			if oldRequirements[resource] == nil then return false end
+		end
+
+		recipe.craftingReqs = newRequirements
+		return true
+	end
+
+	local BlackHoleRecipeMigrated = MigrateRecipe("EZ Micro Black Hole Generator", {
+		[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 400,
+		[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 125,
+		[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 200,
+		[JMod.EZ_RESOURCE_TYPES.POWER] = 500,
+		[JMod.EZ_RESOURCE_TYPES.ANTIMATTER] = 90
+	}, {
+		[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 600,
+		[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 325,
+		[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 400,
+		[JMod.EZ_RESOURCE_TYPES.POWER] = 700,
+		[JMod.EZ_RESOURCE_TYPES.ANTIMATTER] = 90
+	})
+	local ThermonukeRecipeMigrated = MigrateRecipe("EZ Thermonuclear Bomb", {
+		[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 1200,
+		[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 900,
+		[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 1400,
+		[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 1100
+	}, {
+		[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 2000,
+		[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 1700,
+		[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 2200,
+		[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 1900
+	})
+	local RecipesMigrated = BlackHoleRecipeMigrated or ThermonukeRecipeMigrated
+
+	if SERVER and RecipesMigrated then
+		file.Write("jmod_config.txt", util.TableToJSON(JMod.Config, true))
 	end
 
 	-- jmod lua config --
