@@ -243,7 +243,7 @@ JMod.ArmorTable = {
 		wgt = 5,
 		dur = 2,
 		chrg = {
-			power = 20
+			power = 75,
 		},
 		mskmat = "mats_jack_gmod_sprites/vignette.png",
 		eqsnd = "snds_jack_gmod/tinycapcharge.ogg",
