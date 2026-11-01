@@ -637,8 +637,11 @@ if(SERVER)then
 
 	-- Entity save/dupe functionality
 	function ENT:PostEntityPaste(ply, ent, createdEntities)
-		local Time = CurTime()
-		if not(self:GetPersistent()) and (self.AdminOnly) and (not(JMod.IsAdmin(ply)) and not(self:GetPersistent())) then
+		local Time, Persistent = CurTime(), self:GetPersistent()
+		local IsAdmin = Persistent or JMod.IsAdmin(ply)
+		local Craftable = JMod.Config and JMod.Config.Craftables and JMod.Config.Craftables[self.PrintName]
+
+		if not Persistent and not IsAdmin and (self.AdminOnly or (Craftable and istable(Craftable.craftingReqs))) then
 			SafeRemoveEntity(self)
 
 			return
@@ -659,7 +662,7 @@ if(SERVER)then
 			self.SoundLoop = nil
 		end
 
-		if not(JMod.IsAdmin(ply)) and not(self:GetPersistent()) then
+		if not IsAdmin and not Persistent then
 			if self.EZconsumes and not((JMod.Config and JMod.Config.Machines.SpawnMachinesFull) or false) then
 				for _, typ in ipairs(self.EZconsumes) do
 					if istable(self.FlexFuels) and table.HasValue(self.FlexFuels, typ) then

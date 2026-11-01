@@ -1165,11 +1165,11 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			["EZ Micro Black Hole Generator"] = {
 				results = "ent_jack_gmod_ezmbhg",
 				craftingReqs = {
-					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 300,
-					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 25,
-					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 100,
-					[JMod.EZ_RESOURCE_TYPES.POWER] = 400,
-					[JMod.EZ_RESOURCE_TYPES.ANTIMATTER] = 25
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 400,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 125,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 200,
+					[JMod.EZ_RESOURCE_TYPES.POWER] = 500,
+					[JMod.EZ_RESOURCE_TYPES.ANTIMATTER] = 90
 				},
 				sizeScale = 2,
 				category = "Machines",
@@ -1300,10 +1300,10 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			["EZ Thermonuclear Bomb"] = {
 				results = "ent_jack_gmod_eznuke_big",
 				craftingReqs = {
-					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 400,
-					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 100,
-					[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 600,
-					[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 300
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 1200,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 900,
+					[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 1400,
+					[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 1100
 				},
 				sizeScale = 1,
 				category = "Explosives",
