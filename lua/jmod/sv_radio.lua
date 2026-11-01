@@ -516,11 +516,11 @@ local function TryFindSky(ent)
 	return false
 end
 
-local function StartDelivery(pkg, transceiver, id, bff, ply)
+local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime)
 	local Station = JMod.EZ_RADIO_STATIONS[id]
 	Station.lastCaller = transceiver
 	local Time = CurTime()
-	local DeliveryTime, Pos = math.ceil(JMod.Config.RadioSpecs.DeliveryTimeMult * math.Rand(30, 60)), transceiver:GetPos()
+	local DeliveryTime, Pos = deliveryTime or math.ceil(JMod.Config.RadioSpecs.DeliveryTimeMult * math.Rand(30, 60)), transceiver:GetPos()
 	local PlyPos = ply:GetPos()
 	-- Check to see if the player or the transceiver has a better drop position
 	--print(TryFindSky(ply))
@@ -576,6 +576,18 @@ function JMod.EZradioRequest(transceiver, id, ply, pkg, bff)
 				else
 					return "negative on that request, neither we nor regional HQ have any of that at this time"
 				end
+			end
+
+			if pkg == "antimatter" then
+				if math.random() >= .2 then
+					if bff then
+						return "nah fam, antimatter is out of stock and not available right now"
+					end
+
+					return "negative, antimatter is out of stock and not available right now"
+				end
+
+				return StartDelivery(pkg, transceiver, id, bff, ply, 20 * 60)
 			end
 
 			if table.HasValue(Station.restrictedPackageStock, pkg) then

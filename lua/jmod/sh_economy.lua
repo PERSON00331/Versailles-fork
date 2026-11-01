@@ -941,6 +941,11 @@ end
 		Results = {}
 	end
 
+	if ent.IsJackyEZmachine or string.sub(Class, 1, 16) == "ent_jack_gmod_ez" then
+		Results[JMod.EZ_RESOURCE_TYPES.URANIUM] = nil
+		Results[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = nil
+	end
+
 	return Results, "salvaging results for " .. tostring(ent) .. ":\nphysmat: " .. Mat .. "\nnumber of physics: " .. PhysNum .. "\nmodel: " .. Mdl .. "\nspecialized: " .. tostring(Specialized) .. "\n" .. tostring(Message)
 end
 
@@ -1735,4 +1740,3 @@ elseif CLIENT then
 		end
 	end)
 end
-
