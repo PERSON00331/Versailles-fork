@@ -302,16 +302,24 @@ if(SERVER)then
 	end
 	
 	function ENT:ProduceResource()
-		local SelfPos, Forward, Up, Right, Typ = self:GetPos(), self:GetForward(), self:GetUp(), self:GetRight(), self:GetResourceType()
-		local amt = math.Clamp(math.floor(self:GetProgress()), 0, 100)
+    	local SelfPos, Forward, Up, Right, Typ = self:GetPos(), self:GetForward(), self:GetUp(), self:GetRight(), self:GetResourceType()
+    	local amt = math.Clamp(math.floor(self:GetProgress()), 0, 100)
 
-		if amt <= 0 then return end
+    	if amt <= 0 then return end
 
-		local pos = SelfPos
-		local spawnVec = self:WorldToLocal(SelfPos + Up * 50 - Right * 50)
-		self:SetProgress(self:GetProgress() - amt)
-		JMod.MachineSpawnResource(self, self:GetResourceType(), amt, spawnVec, Angle(0, 0, -90), Right * 100, 300)
-		JMod.DepleteNaturalResource(self.DepositKey, amt)
+    	local pos = SelfPos
+    	local spawnVec = self:WorldToLocal(SelfPos + Up * 50 - Right * 50)
+    	self:SetProgress(self:GetProgress() - amt)
+    	JMod.MachineSpawnResource(self, self:GetResourceType(), amt, spawnVec, Angle(0, 0, -90), Right * 100, 300)
+
+    	if Typ == JMod.EZ_RESOURCE_TYPES.COAL then
+        	if math.random(1, 100) <= 8 then 
+            local DiamondAmount = math.random(1, 5)
+            JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.DIAMOND, DiamondAmount, spawnVec, Angle(0, 0, -90), Right * 100, 300)
+        	end
+    	end
+
+    	JMod.DepleteNaturalResource(self.DepositKey, amt)
 	end
 
 	function ENT:OnPostEntityPaste(ply, ent, createdEntities)

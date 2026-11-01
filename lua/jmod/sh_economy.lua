@@ -784,37 +784,44 @@ function JMod.GetSalvageYield(ent)
 
 	local Mat = string.lower(Phys:GetMaterial())
 
+
+	if istable(ent.JModOriginalMasses) then
+		for Index, OriginalMass in pairs(ent.JModOriginalMasses) do
+			local PhysObj = ent:GetPhysicsObjectNum(Index)
+			if IsValid(PhysObj) and isnumber(OriginalMass) and OriginalMass > 0 then
+				PhysObj:SetMass(OriginalMass)
+			end
+		end
+	end
+
 	local Mass = 0
 
-	
 	if istable(ent.JModOriginalMasses) then
-    	
-    	for _, OriginalMass in pairs(ent.JModOriginalMasses) do
-        if isnumber(OriginalMass) and OriginalMass > 0 then
-            Mass = Mass + OriginalMass
-        end
-    end
+		for _, OriginalMass in pairs(ent.JModOriginalMasses) do
+			if isnumber(OriginalMass) and OriginalMass > 0 then
+				Mass = Mass + OriginalMass
+			end
+		end
+	else
+		for i = 0, PhysNum - 1 do
+			local PhysObj = ent:GetPhysicsObjectNum(i)
 
-else
-    for i = 0, PhysNum - 1 do
-        local PhysObj = ent:GetPhysicsObjectNum(i)
+			if IsValid(PhysObj) then
+				local OriginalMass = PhysObj:GetMass()
 
-        if IsValid(PhysObj) then
-            local OriginalMass = PhysObj:GetMass()
+				if isnumber(OriginalMass) and OriginalMass > 0 then
+					Mass = Mass + OriginalMass
+				end
+			end
+		end
+	end
 
-            if isnumber(OriginalMass) and OriginalMass > 0 then
-                Mass = Mass + OriginalMass
-            end
-        end
-    end
-end
-
-if Mass <= 0 then
-    return {}, "cannot salvage: invalid physics mass"
-end
+	if Mass <= 0 then
+		return {}, "cannot salvage: invalid physics mass"
+	end
 
 	if Mass > 35 then
-    Mass = math.ceil(Mass ^ .9)
+		Mass = math.ceil(Mass ^ .9)
 	end
 
 	-- again, more corrections
@@ -888,17 +895,20 @@ end
 
 	local Results = {}
 	JMod.SalvagingMassEntities = JMod.SalvagingMassEntities or {}
+
 	for k, v in pairs(Info) do
-	if ScaleByMass then
-    	Results[k] = math.ceil(v * Mass * 1.5 * JMod.Config.ResourceEconomy.SalvageYield)
-	else
-    	Results[k] = math.ceil(v * .9)
-	end
-		if ent.LVS and ent.ExplodedAlready then
-			Results[k] = Results[k] * .5
-		end
-		if Results[k] <= 0 then Results[k] = nil end
-	end
+    	if ScaleByMass then
+        	local Variation = math.Rand(0.7, 1.3)
+        	Results[k] = math.ceil(v * Mass * 1.5 * JMod.Config.ResourceEconomy.SalvageYield * Variation)
+		else
+        	Results[k] = math.ceil(v * .9)
+    	end
+
+    if ent.LVS and ent.ExplodedAlready then
+        Results[k] = Results[k] * .5
+    end
+    if Results[k] <= 0 then Results[k] = nil end
+end
 
 	if ent.IsJackyEZmachine then
 		for k, v in pairs(JMod.EZ_RESOURCE_TYPE_METHODS) do
@@ -922,12 +932,6 @@ end
 			end
 		end
 	end
-
-	--[[if ent.JModInv then
-		for k, v in pairs(ent.JModInv.EZresources) do
-			Results[k] = (Results[k] or 0) + v
-		end
-	end--]]
 
 	local FinalResults, Message = hook.Run("JMod_SalvageResults", ent, Results, Mat, Mdl, Specialized)
 
@@ -1650,6 +1654,20 @@ timer.Create("Massfix", 0.25, 0, function()
                     end
                 end
             end
+        end
+    end
+end)
+
+hook.Add("PlayerSpawnedProp", "Saveorigmass", function(Ply, Model, Ent)
+    if not IsValid(Ent) then return end
+
+    Ent.JModOriginalMasses = {}
+
+    for i = 0, Ent:GetPhysicsObjectCount() - 1 do
+        local Phys = Ent:GetPhysicsObjectNum(i)
+
+        if IsValid(Phys) then
+            Ent.JModOriginalMasses[i] = Phys:GetMass()
         end
     end
 end)
