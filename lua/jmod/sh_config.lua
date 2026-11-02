@@ -961,6 +961,21 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				craftingType = "toolbox",
 				description = "Projects a forcefield that stops all incoming attacks. The most advanced machine ever produced by J.I."
 			},
+			["EZ Salvage Saw"] = {
+			results = "ent_jack_gmod_ezsalvager",
+			craftingReqs = {
+				[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 175,
+				[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 125,
+				[JMod.EZ_RESOURCE_TYPES.COPPER] = 69,
+				[JMod.EZ_RESOURCE_TYPES.STEEL] = 69,
+				[JMod.EZ_RESOURCE_TYPES.TUNGSTEN] = 69
+			},
+			sizeScale = 3,
+			buildZoffset = 80,
+			category = "Machines",
+			craftingType = "toolbox",
+			description = "A powered device that is capable of salvaging objects rather quickly."
+			},
 			["EZ Bomb Bay"] = {
 				results = "ent_jack_gmod_ezbombbay",
 				craftingReqs = {
