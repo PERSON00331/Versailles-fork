@@ -191,10 +191,10 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					}
 				},
 				["advanced parts"] = {
-					description = "20 units of Advanced Parts, used for powerful crafting and upgrading.",
+					description = "100 units of Advanced Parts, used for powerful crafting and upgrading.",
 					category = "Resources",
 					results = {
-						{"ent_jack_gmod_ezadvparts", 1, 20}
+						{"ent_jack_gmod_ezadvparts", 1, 100}
 					}
 				},
 				["precision parts"] = {
@@ -283,7 +283,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					description = "Two toolboxes for crafting, nailing, salvaging and packaging items. ",
 					category = "Tools",
 					results = {
-						{"ent_jack_gmod_eztoolbox", 2}
+						{"ent_jack_gmod_eztoolbox", 200} -- joke for now, want to see how person reacts
 					}
 				},
 				["rations"] = {
@@ -1314,15 +1314,15 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			["EZ Thermonuclear Bomb"] = {
 				results = "ent_jack_gmod_eznuke_big",
 				craftingReqs = {
-					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 2000,
-					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 1700,
-					[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 2200,
-					[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 1900
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 855,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 1250,
+					[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 1650,
+					[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 385
 				},
 				sizeScale = 1,
 				category = "Explosives",
 				craftingType = "toolbox",
-				description = "Now we are all sons of bitches."
+				description = "Now we are all sons of bitches. Always fun to make when people are building."
 			},
 			["EZ Vehicle Mine"] = {
 				results = "ent_jack_gmod_ezatmine",
