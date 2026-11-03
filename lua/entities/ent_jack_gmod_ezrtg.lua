@@ -117,8 +117,8 @@ if(SERVER)then
 		if self.NextResourceThink < Time then
 			self.NextResourceThink = Time + 1
 			if State == STATE_ON then
-				local PowerPerMin = 10
-				local PowerToProduce = (PowerPerMin/60) * JMod.EZ_GRADE_BUFFS[Grade]
+				local SpeedMultiplier = 2 + (Grade - 1) * .25
+				local PowerToProduce = (10 / 60) * SpeedMultiplier
 
 				self:SetProgress(self:GetProgress() + PowerToProduce)
 

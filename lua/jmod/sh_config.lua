@@ -975,6 +975,16 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			craftingType = "toolbox",
 			description = "A huge metal silo used for better storage instead of using basic resource crates."
 			},
+			["EZ Item Pipe"] = {
+				results = "ent_jack_gmod_ezitempipe",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 15,
+					[JMod.EZ_RESOURCE_TYPES.STEEL] = 10
+				},
+				category = "Other",
+				craftingType = "toolbox",
+				description = "Connect a resource source to a compatible machine or storage crate. Connect in Source > Destination order."
+			},
 			["EZ Bomb Bay"] = {
 				results = "ent_jack_gmod_ezbombbay",
 				craftingReqs = {
@@ -1430,12 +1440,26 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					[JMod.EZ_RESOURCE_TYPES.STEEL] = 200,
 					[JMod.EZ_RESOURCE_TYPES.ALUMINUM] = 100,
 					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 200,
-					[JMod.EZ_RESOURCE_TYPES.URANIUM] = 300
+					[JMod.EZ_RESOURCE_TYPES.URANIUM] = 175
 				},
 				sizeScale = 6,
 				category = "Machines",
 				craftingType = "toolbox",
 				description = "Generator that uses radioactive decay to slowly create power.\nWorks just about anywhere."
+			},
+			["EZ Nuclear Reactor"] = {
+				results = "ent_jack_gmod_nuclearreactor",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 500,
+					[JMod.EZ_RESOURCE_TYPES.STEEL] = 500,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 200,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 250,
+					[JMod.EZ_RESOURCE_TYPES.URANIUM] = 100
+				},
+				sizeScale = 10,
+				category = "Machines",
+				craftingType = "toolbox",
+				description = "Consumes uranium and water to produce fissile material and battery power. If it runs out of water for 2 minutes, it will melt down."
 			},
 			["EZ Sprinkler"] = {
 				results = "ent_jack_gmod_ezsprinkler",

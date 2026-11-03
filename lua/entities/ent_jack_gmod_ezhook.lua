@@ -60,7 +60,20 @@ if SERVER then
 				local Ent = data.HitEntity
 				if (IsValid(Ent) and not(Ent:IsPlayer() or Ent:IsNPC() or Ent:IsNextBot() or Ent == self.EZconnector)) then
 					timer.Simple(0, function()
-						if self.EZhookType == "Plugin" then
+						if self.EZhookType == "ItemPipe" then
+							if IsValid(self.ItemPipeController) then
+								local PlayerHolding
+								for _, ply in ipairs(ents.FindInSphere(self:GetPos(), 100)) do
+									if ply:IsPlayer() and ply:Alive() then
+										PlayerHolding = ply
+										break
+									end
+								end
+								if IsValid(PlayerHolding) then
+									self.ItemPipeController:OnPipePlugCollision(self, Ent, data.HitPos, data.HitNormal, PlayerHolding)
+								end
+							end
+						elseif self.EZhookType == "Plugin" then
 							local ConnectionRange = self.EZconnector.MaxConnectionRange or 1000
 							local PlayerHolding = nil
 							local NearbyPlayers = ents.FindInSphere(self:GetPos(), 100)
@@ -135,6 +148,16 @@ if SERVER then
 		if tobool(onOff) then
 			local State = self:GetState()
 			if State < 0 then return end
+			if self.EZhookType == "ItemPipe" then
+				if IsValid(self.ItemPipeController) then
+					if JMod.IsAltUsing(Dude) then
+						self.ItemPipeController:RemovePipe(Dude)
+					else
+						self.ItemPipeController:ShowOutput(self, Dude)
+					end
+				end
+				return
+			end
 			local Alt = JMod.IsAltUsing(Dude)
 			self:SetBodygroup(1, 1)
 

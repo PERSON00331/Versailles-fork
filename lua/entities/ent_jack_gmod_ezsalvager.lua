@@ -12,6 +12,7 @@ ENT.Model = "models/aboot/ezgrinder01.mdl"
 ENT.Mass = 200
 ENT.SpawnHeight = 10
 ENT.EZcolorable = false
+ENT.EZconsumes = {JMod.EZ_RESOURCE_TYPES.POWER}
 ENT.JModPreferredCarryAngles = Angle(0, 180, -90)
 ENT.EZupgradable = false
 ENT.StaticPerfSpecs = {
@@ -272,5 +273,5 @@ elseif(CLIENT)then
 			debugoverlay.Cross(SelfPos, 10, .2, Color(255, 0, 0), true)
 		end
 	end
-	language.Add("ent_aboot_gmod_ezpounder","EZ Ground-Pounder")
+	language.Add("ent_aboot_gmod_ezsalvager","EZ Salvage Saw")
 end

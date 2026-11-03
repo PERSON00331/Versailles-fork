@@ -368,9 +368,20 @@ end
 
 function SWEP:BuildItem(selectedBuild)
 	local Built = false
-	local BuildInfo = self.Craftables[selectedBuild]
+	local BuildInfo = JMod.Config and JMod.Config.Craftables and JMod.Config.Craftables[selectedBuild]
+	if not istable(BuildInfo) then
+		self:Msg("That toolbox recipe is unavailable. Reopen the crafting menu and try again.")
+		return
+	end
+	local CraftingType = BuildInfo.craftingType
+	local IsToolboxCraftable = (istable(CraftingType) and table.HasValue(CraftingType, "toolbox")) or CraftingType == "toolbox"
+	if not IsToolboxCraftable then
+		self:Msg("That toolbox recipe is unavailable. Reopen the crafting menu and try again.")
+		return
+	end
+	self.Craftables = self.Craftables or {}
+	self.Craftables[selectedBuild] = BuildInfo
 	local Ent, Pos, Norm, SpawnAngle = self:DetermineBuildPos(BuildInfo.buildZoffset)
-	if not BuildInfo then return end
 	local MaxElecConsume, MaxGasConsume = 40, 30
 	if not(self:GetElectricity() >= math.min(4 * (BuildInfo.sizeScale or 1), MaxElecConsume)) or not(self:GetGas() >= math.min(3 * (BuildInfo.sizeScale or 1), MaxGasConsume)) then
 		self:Msg("   You need to refill your gas and/or power\nPress Reload on gas or batteries to refill")

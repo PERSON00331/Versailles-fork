@@ -408,6 +408,43 @@ JMod.Hints = {
 	["ent_jack_gmod_ezcrate"] = {
 		LangKey = "hint ent_jack_gmod_ezcrate"
 	},
+	["ent_jack_gmod_ezitempipe"] = {
+		LangKey = "hint ent_jack_gmod_ezitempipe"
+	},
+	["item pipe source attached"] = {
+		LangKey = "hint item pipe source attached",
+		RepeatCount = 5
+	},
+	["item pipe wrong order"] = {
+		LangKey = "hint item pipe wrong order",
+		RepeatCount = 5
+	},
+	["item pipe bad connection"] = {
+		LangKey = "hint item pipe bad connection",
+		RepeatCount = 5
+	},
+	["item pipe empty source"] = {
+		LangKey = "hint item pipe empty source",
+		RepeatCount = 5
+	},
+	["item pipe output select"] = {
+		LangKey = "hint item pipe output select",
+		RepeatCount = 5
+	},
+	["item pipe all outputs connected"] = {
+		LangKey = "hint item pipe all outputs connected",
+		RepeatCount = 5
+	},
+	["item pipe connected"] = {
+		LangKey = "hint item pipe connected"
+	},
+	["item pipe disconnected"] = {
+		LangKey = "hint item pipe disconnected"
+	},
+	["item pipe not working"] = {
+		LangKey = "hint item pipe not working",
+		RepeatCount = 5
+	},
 	["crate"] = {
 		LangKey = "hint crate"
 	},
@@ -721,6 +758,18 @@ JMod.Hints = {
 	},
 	["need ore"] = {
 		LangKey = "hint need ore",
+		RepeatCount = 5
+	},
+	["need reactor water"] = {
+		LangKey = "hint need reactor water",
+		RepeatCount = 5
+	},
+	["need reactor uranium"] = {
+		LangKey = "hint need reactor uranium",
+		RepeatCount = 5
+	},
+	["reactor shutdown threshold"] = {
+		LangKey = "hint reactor shutdown threshold",
 		RepeatCount = 5
 	},
 	["need fuel"] = {

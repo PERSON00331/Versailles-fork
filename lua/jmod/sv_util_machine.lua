@@ -163,7 +163,7 @@ function JModResourceCable(Ent1, Ent2, resType, plugPos1, plugPos2, length, newC
 end
 duplicator.RegisterConstraint("JModResourceCable", JModResourceCable, "Ent1", "Ent2", "resType", "plugPos1", "plugPos2", "length", "newCable")
 
-function JMod.CreateResourceConnection(producer, consumer, resType, plugPos1, plugPos2, length, newCable)
+function JMod.CreateResourceConnection(producer, consumer, resType, plugPos1, plugPos2, length, newCable, allowCrateConsumer)
 	print("[JMOD] ResConnection:", producer, consumer, resType, plugPos1, plugPos2, length, newCable)
 	if not (IsValid(producer) and IsValid(consumer) and resType) then 
 
@@ -178,7 +178,10 @@ function JMod.CreateResourceConnection(producer, consumer, resType, plugPos1, pl
 	if resType == "Entity" then
 		if not (consumer.GetIsAutoLoading and consumer:GetIsAutoLoading()) then return false end
 	else
-		if not (consumer.EZconsumes and table.HasValue(consumer.EZconsumes, resType)) and not (resType == JMod.EZ_RESOURCE_TYPES.POWER and (consumer.EZpowerProducer and not producer.EZpowerProducer)) then 
+		local IsValidConsumer = (consumer.EZconsumes and table.HasValue(consumer.EZconsumes, resType))
+			or (resType == JMod.EZ_RESOURCE_TYPES.POWER and consumer.EZpowerProducer and not producer.EZpowerProducer)
+			or (allowCrateConsumer and consumer.IsJackyEZcrate and consumer.GetResourceType and (consumer:GetResourceType() == resType or consumer:GetResourceType() == "generic"))
+		if not IsValidConsumer then
 
 			return false 
 		end
@@ -341,15 +344,70 @@ function JMod.DistributePower(self)
 	self.PowerFlow = self:GetElectricity()
 end
 
+local ITEM_PIPE_TRANSFER_RATE = 100
+
+function JMod.DistributeItemPipeResources(source, consumer, resourceType)
+	if not(IsValid(source) and source.IsJackyEZcrate and source.GetResourceType and source.GetEZsupplies and source.SetEZsupplies) then return end
+	if not(IsValid(consumer) and not consumer.IsJackyEZcrate and consumer.EZconsumes and table.HasValue(consumer.EZconsumes, resourceType) and consumer.TryLoadResource) then return end
+
+	if not resourceType or source:GetResourceType() ~= resourceType then return end
+
+	local Available = source:GetEZsupplies(resourceType) or 0
+	if Available <= 0 then return end
+
+	local TransferAmount = math.min(Available, ITEM_PIPE_TRANSFER_RATE)
+	local Before
+	local ResourceGetterName = JMod.EZ_RESOURCE_TYPE_METHODS[resourceType]
+	local ResourceGetter = ResourceGetterName and consumer["Get" .. ResourceGetterName]
+	if resourceType == JMod.EZ_RESOURCE_TYPES.BASICPARTS and consumer.Durability then
+		Before = consumer.Durability
+	elseif ResourceGetter then
+		Before = ResourceGetter(consumer)
+	end
+
+	local Accepted = consumer:TryLoadResource(resourceType, TransferAmount)
+	if Before then
+		if resourceType == JMod.EZ_RESOURCE_TYPES.BASICPARTS and consumer.Durability then
+			Accepted = math.max((consumer.Durability - Before) / 3, 0)
+		elseif ResourceGetter then
+			Accepted = math.max(ResourceGetter(consumer) - Before, 0)
+		end
+	end
+	if Accepted > 0 then
+		Accepted = math.min(Accepted, Available)
+		source:SetEZsupplies(resourceType, Available - Accepted)
+	end
+end
+
 function JMod.MachineSpawnResource(machine, resourceType, amount, relativeSpawnPos, relativeSpawnAngle, ejectionVector, findCrateRange)
 	amount = math.Round(amount)
 	if not(amount) or (amount < 1) then return end --print("[JMOD] " .. tostring(machine) .. " tried to produce a resource with 0 value") return end
+	machine.EZproduces = machine.EZproduces or {}
+	machine.EZproduces[resourceType] = true
 	machine.NextRefillTime = CurTime() + 1
 	local SpawnPos, SpawnAngle, MachineOwner = machine:LocalToWorld(relativeSpawnPos), relativeSpawnAngle and machine:LocalToWorldAngles(relativeSpawnAngle), JMod.GetEZowner(machine)
 	local MachineCenter = machine:LocalToWorld(machine:OBBCenter())
+	for _, cable in pairs(constraint.FindConstraints(machine, "JModResourceCable")) do
+		local CableEntity = cable.Constraint
+		local IsItemPipe = cable.EZitempipe or (IsValid(CableEntity) and CableEntity.EZitempipe)
+		local EntToCrate = cable.Ent1 == machine and cable.Ent2 or cable.Ent1
+		local CableResourceType = cable.resType or (IsValid(CableEntity) and CableEntity.resType)
+		if IsItemPipe and CableResourceType == resourceType and IsValid(EntToCrate) and EntToCrate.IsJackyEZcrate and EntToCrate.TryLoadResource then
+			local Accepted = EntToCrate:TryLoadResource(resourceType, amount, true)
+			amount = math.max(amount - Accepted, 0)
+			if amount <= 0 then
+				if (resourceType == JMod.EZ_RESOURCE_TYPES.POWER) and machine.GetState and machine:GetState() == JMod.EZ_STATE_ON and not machine.EZstayOn and machine.TurnOff then
+					machine:TurnOff()
+				end
+				return
+			end
+		end
+	end
 	if (resourceType == JMod.EZ_RESOURCE_TYPES.POWER) and (machine.GetState and machine:GetState() == JMod.EZ_STATE_ON) then
 		local PowerToGive = amount
 		for _, cable in pairs(constraint.FindConstraints(machine, "JModResourceCable")) do
+			local CableEntity = cable.Constraint
+			if cable.EZitempipe or (IsValid(CableEntity) and CableEntity.EZitempipe) then continue end
 			local EntToPower = cable.Ent1 == machine and cable.Ent2 or cable.Ent1
 			if not IsValid(EntToPower) or not(EntToPower.EZconsumes and table.HasValue(EntToPower.EZconsumes, JMod.EZ_RESOURCE_TYPES.POWER)) then
 				cable:Remove()
