@@ -961,20 +961,19 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				craftingType = "toolbox",
 				description = "Projects a forcefield that stops all incoming attacks. The most advanced machine ever produced by J.I."
 			},
-			["EZ Salvage Saw"] = {
-			results = "ent_jack_gmod_ezsalvager",
+			["EZ Resource Silo"] = {
+			results = "ent_jack_gmod_ezstoragesilo",
 			craftingReqs = {
-				[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 175,
-				[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 125,
-				[JMod.EZ_RESOURCE_TYPES.COPPER] = 69,
-				[JMod.EZ_RESOURCE_TYPES.STEEL] = 69,
-				[JMod.EZ_RESOURCE_TYPES.TUNGSTEN] = 69
+				[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 175,
+				[JMod.EZ_RESOURCE_TYPES.STEEL] = 115,
+				[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 55,
+				[JMod.EZ_RESOURCE_TYPES.TUNGSTEN] = 15,
 			},
 			sizeScale = 3,
-			buildZoffset = 80,
-			category = "Machines",
+			buildZoffset = 150,
+			category = "Other",
 			craftingType = "toolbox",
-			description = "A powered device that is capable of salvaging objects rather quickly."
+			description = "A huge metal silo used for better storage instead of using basic resource crates."
 			},
 			["EZ Bomb Bay"] = {
 				results = "ent_jack_gmod_ezbombbay",
@@ -1181,10 +1180,10 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				results = "ent_jack_gmod_ezmbhg",
 				craftingReqs = {
 					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 600,
-					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 325,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 165,
 					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 400,
 					[JMod.EZ_RESOURCE_TYPES.POWER] = 700,
-					[JMod.EZ_RESOURCE_TYPES.ANTIMATTER] = 90
+					[JMod.EZ_RESOURCE_TYPES.ANTIMATTER] = 25
 				},
 				sizeScale = 2,
 				category = "Machines",
