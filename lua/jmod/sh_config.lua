@@ -1459,7 +1459,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				sizeScale = 10,
 				category = "Machines",
 				craftingType = "toolbox",
-				description = "Consumes uranium and water to produce fissile material and battery power. If it runs out of water for 2 minutes, it will melt down."
+				description = "Upgradable reactor that consumes uranium and water to produce power and fissile material. Low coolant raises core heat; a dry reactor melts down after 2 minutes."
 			},
 			["EZ Sprinkler"] = {
 				results = "ent_jack_gmod_ezsprinkler",

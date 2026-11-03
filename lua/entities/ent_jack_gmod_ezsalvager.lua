@@ -12,12 +12,19 @@ ENT.Model = "models/aboot/ezgrinder01.mdl"
 ENT.Mass = 200
 ENT.SpawnHeight = 10
 ENT.EZcolorable = false
-ENT.EZconsumes = {JMod.EZ_RESOURCE_TYPES.POWER}
+ENT.EZconsumes = {
+	JMod.EZ_RESOURCE_TYPES.BASICPARTS,
+	JMod.EZ_RESOURCE_TYPES.FUEL
+}
 ENT.JModPreferredCarryAngles = Angle(0, 180, -90)
-ENT.EZupgradable = false
+ENT.EZupgradable = true
+ENT.CutStrength = 2500
+ENT.CutStrengthPerUpgrade = 300
+ENT.CutSpeed = .5
+ENT.CutSpeedReductionPerUpgrade = .1
 ENT.StaticPerfSpecs = {
 	MaxDurability = 100,
-	MaxElectricity = 200
+	MaxFuel = 100
 }
 ENT.DynamicPerfSpecs = {
 	Armor = 1
@@ -27,6 +34,7 @@ local STATE_BROKEN, STATE_OFF, STATE_RUNNING = -1, 0, 1
 ---
 function ENT:CustomSetupDataTables()
 	self:NetworkVar("Float", 1, "Progress")
+	self:NetworkVar("Float", 2, "Fuel")
 	--self:NetworkVar("String", 0, "Message")
 end
 
@@ -46,7 +54,7 @@ if(SERVER)then
 	function ENT:TurnOn(activator)
 		if self:GetState() ~= STATE_OFF then return end
 
-		if (self:GetElectricity() > 0) then
+		if (self:GetFuel() > 0) then
 			if IsValid(activator) then self.EZstayOn = true end
 			self:SetState(STATE_RUNNING)
 			self.SoundLoop = CreateSound(self, "^snds_jack_gmod/genny_start_loop.wav")
@@ -54,8 +62,14 @@ if(SERVER)then
 			self.SoundLoop:Play()
 			self:SetProgress(0)
 		else
-			JMod.Hint(activator, "nopower")
+			JMod.Hint(activator, "need fuel")
 		end
+	end
+
+	function ENT:ConsumeFuel(amt)
+		local NewAmt = math.Clamp(self:GetFuel() - amt, 0, self.MaxFuel)
+		self:SetFuel(NewAmt)
+		if NewAmt <= 0 and self:GetState() > 0 then self:TurnOff() end
 	end
 	
 	function ENT:TurnOff(activator)
@@ -106,15 +120,18 @@ if(SERVER)then
 		local State, Time, Prog = self:GetState(), CurTime(), self:GetProgress()
 		local SelfPos, SelfUp, SelfRight, Forward = self:GetPos(), self:GetUp(), self:GetRight(), self:GetForward()
 		local Phys = self:GetPhysicsObject()
+		local UpgradeCount = math.max(self:GetGrade() - JMod.EZ_GRADE_BASIC, 0)
+		local CutStrength = self.CutStrength + self.CutStrengthPerUpgrade * UpgradeCount
+		local CutSpeed = math.max(.1, self.CutSpeed - self.CutSpeedReductionPerUpgrade * UpgradeCount)
 
 		self:UpdateWireOutputs()
 
 		if (self.NextResourceThinkTime < Time) then
-			self.NextResourceThinkTime = Time + .5
+			self.NextResourceThinkTime = Time + CutSpeed
 			if State == STATE_BROKEN then
 				if self.SoundLoop then self.SoundLoop:Stop() end
 
-				if self:GetElectricity() > 0 then
+				if self:GetFuel() > 0 then
 					if math.random(1, 4) == 2 then JMod.DamageSpark(self) end
 				end
 
@@ -125,8 +142,6 @@ if(SERVER)then
 				local Radius = 16
 				local RotationAngles = self:GetAngles():GetCopy()
 				local SpinOrigin = SelfPos + SelfUp * -16
-				local CutStrength = 2500
-
 				for i = 1, Resolution do
 					RotationAngles:RotateAroundAxis(RotationAngles:Forward(), 360 / Resolution)
 					local CutDir = RotationAngles:Right() * -1
@@ -170,16 +185,15 @@ if(SERVER)then
 							debugoverlay.Text(HitPos, Message, .2, true)
 						end
 
-						self:ConsumeElectricity(0.12 * JMod.Config.Tools.Toolbox.DeconstructSpeedMult)
-
+						self:ConsumeFuel(0.12 * JMod.Config.Tools.Toolbox.DeconstructSpeedMult)
 						break
 					end
 				end
-				self:ConsumeElectricity(0.12 * JMod.Config.Tools.Toolbox.DeconstructSpeedMult)
+				self:ConsumeFuel(0.12 * JMod.Config.Tools.Toolbox.DeconstructSpeedMult)
 			end
 		end
 
-		self:NextThink(CurTime() + .7)
+		self:NextThink(CurTime() + (State == STATE_RUNNING and CutSpeed or .7))
 		return true
 	end
 
@@ -207,7 +221,7 @@ elseif(CLIENT)then
 		--self.SawBlade = JMod.MakeModel(self, "models/props_junk/sawblade001a.mdl")
 		self.CurSpin = 0
 		self.CurSpeed = 0
-		self.MaxElectricity = 200
+		self.MaxFuel = 100
 	end
 
 	function ENT:Think()
@@ -263,10 +277,10 @@ elseif(CLIENT)then
 				DisplayAng:RotateAroundAxis(DisplayAng:Up(), 180)
 				local Opacity = math.random(50, 150)
 				cam.Start3D2D(SelfPos + Up * 25 + Right * 15, DisplayAng, .15)
-					draw.SimpleTextOutlined("POWER", "JMod-Display",0,0,Color(255,255,255,Opacity),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP,3,Color(0,0,0,Opacity))
-					local ElecFrac=self:GetElectricity()/self.MaxElectricity
-					local R,G,B = JMod.GoodBadColor(ElecFrac)
-					draw.SimpleTextOutlined(tostring(math.Round(ElecFrac*100)).."%","JMod-Display",0,-30,Color(R,G,B,Opacity),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP,3,Color(0,0,0,Opacity))
+					draw.SimpleTextOutlined("FUEL", "JMod-Display",0,0,Color(255,255,255,Opacity),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP,3,Color(0,0,0,Opacity))
+					local FuelFrac=self:GetFuel()/self.MaxFuel
+					local R,G,B = JMod.GoodBadColor(FuelFrac)
+					draw.SimpleTextOutlined(tostring(math.Round(FuelFrac*100)).."%","JMod-Display",0,-30,Color(R,G,B,Opacity),TEXT_ALIGN_CENTER,TEXT_ALIGN_TOP,3,Color(0,0,0,Opacity))
 				cam.End3D2D()
 			end
 		else

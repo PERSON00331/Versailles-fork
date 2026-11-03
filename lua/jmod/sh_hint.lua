@@ -520,6 +520,9 @@ JMod.Hints = {
 	["ent_jack_gmod_ezcentrifuge"] = {
 		LangKey = "hint ent_jack_gmod_ezcentrifuge"
 	},
+	["ent_jack_gmod_nuclearreactor"] = {
+		LangKey = "hint ent_jack_gmod_nuclearreactor"
+	},
 	["refill centrifuge"] = {
 		LangKey = "hint refill centrifuge"
 	},

@@ -216,6 +216,7 @@
 	["hint ent_jack_gmod_ezfurnace"] = "The smelting furnace allows you to refine ore into ingots",
 	["hint ent_jack_gmod_ezrefinery"] = "The refinery turns crude oil into plastic, fuel, rubber, and gas",
 	["hint ent_jack_gmod_ezcentrifuge"] = "The Enrichment Centrifuge turns uranium into fissile material",
+	["hint ent_jack_gmod_nuclearreactor"] = "Put in water and uranium to start the process. Heat does not matter unless it's at 100% or the water's empty, if it is then you have two minutes to fix it before the reactor blows up and releases radiation everywhere.",
 	["hint refill centrifuge"] = "The centrifuge requires power, gas, and uranium to run",
 	["hint ore scan"] = "Solid resource deposits can be found with a ground scanner",
 	["hint liquid scan"] = "Liquid resource reserves can be found with a ground scanner",
