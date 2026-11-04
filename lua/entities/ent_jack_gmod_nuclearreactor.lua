@@ -40,6 +40,7 @@ local MIN_MANUAL_SHUTDOWN_PROGRESS = 30
 local STEAM_INTERVAL = .5
 local HEAT_RISE_TIME = 60
 local HEAT_COOLDOWN_TIME = 30
+local YIELD_BONUS_PER_GRADE = 0.15
 local FALLOUT_PARTICLE_COUNT = 15
 local FALLOUT_PARTICLE_RANGE = 1500
 local MAPWIDE_FALLOUT_INTERVAL = 5
@@ -151,10 +152,10 @@ if SERVER then
 		local PowerAmount = Progress >= MIN_MANUAL_SHUTDOWN_PROGRESS
 			and 500 * Progress / 100
 			or Progress * (.5 + 4.5 * Progress / MIN_MANUAL_SHUTDOWN_PROGRESS)
-		local GradeMultiplier = JMod.EZ_GRADE_BUFFS[self:GetGrade()]
+		local YieldMultiplier = 1 + math.max(self:GetGrade() - 1, 0) * YIELD_BONUS_PER_GRADE
 		self:SetProgress(0)
-		JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL, 10 * Progress / 100 * GradeMultiplier, SpawnPos, Angle(0, 0, 0), EjectionPos, 300)
-		JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.POWER, PowerAmount * GradeMultiplier, SpawnPos, Angle(0, 0, 0), EjectionPos, 300)
+		JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL, 10 * Progress / 100 * YieldMultiplier, SpawnPos, Angle(0, 0, 0), EjectionPos, 300)
+		JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.POWER, PowerAmount * YieldMultiplier, SpawnPos, Angle(0, 0, 0), EjectionPos, 300)
 		self:EmitSound("items/suitchargeok1.wav", 80, 120)
 	end
 
