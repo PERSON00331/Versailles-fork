@@ -9,7 +9,6 @@ ENT.MaxConnectionRange = math.huge
 ENT.SpawnRopeLength = 100000000
 ENT.NoSpoolRope = true
 ENT.NoInitialPickup = true
-ENT.SourcePlugColor = Color(255, 0, 0)
 ENT.TransferDelayPer350 = .15
 ENT.IconOverride = "materials/entities/ent_jack_gmod_ezitempipe.png"
 

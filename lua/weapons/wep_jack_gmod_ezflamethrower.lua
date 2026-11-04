@@ -311,8 +311,13 @@ function SWEP:PrimaryAttack()
 				Flame:Spawn()
 				Flame:Activate()
 				local DrainMult = JMod.Config.Weapons.FlamethrowerFuelDrainMult or 1
-				self:SetEZsupplies(JMod.EZ_RESOURCE_TYPES.FUEL, math.Clamp(Fuel - 1 * DrainMult, 0, 100))
-				self:SetEZsupplies(JMod.EZ_RESOURCE_TYPES.GAS, math.Clamp(Gas - 1 * DrainMult, 0, 100))
+				local Drain = (self.FlamethrowerDrainRemainder or 0) + DrainMult * .25
+				local WholeDrain = math.floor(Drain)
+				self.FlamethrowerDrainRemainder = Drain - WholeDrain
+				if WholeDrain > 0 then
+					self:SetEZsupplies(JMod.EZ_RESOURCE_TYPES.FUEL, math.Clamp(Fuel - WholeDrain, 0, 100))
+					self:SetEZsupplies(JMod.EZ_RESOURCE_TYPES.GAS, math.Clamp(Gas - WholeDrain, 0, 100))
+				end
 			end
 			self.NextExtinguishTime = Time + NextAttackTime * 2
 		end

@@ -38,6 +38,7 @@ if SERVER then
 		self.Range = 1000
 		self.NextUseTime = 0
 		self:SetProgress(0)
+		self.CapturedParticles = 0
 		self.SoundLoop = CreateSound(self, "snds_jack_gmod/compressor_loop.wav")
 		self.NextLogicThink = 0
 	end
@@ -153,7 +154,12 @@ if SERVER then
 
 					SafeRemoveEntity(v)
 					self:ConsumeElectricity(.2)
-					self:SetProgress(math.Clamp(self:GetProgress() - 1, 0, 100))
+					self.CapturedParticles = self.CapturedParticles + 1
+					if self.CapturedParticles >= 3 then
+						self.CapturedParticles = self.CapturedParticles - 3
+						local outputPos = self:WorldToLocal(self:GetPos() + self:GetUp() * 30 + self:GetRight() * 60)
+						JMod.MachineSpawnResource(self, JMod.EZ_RESOURCE_TYPES.CHEMICALS, 1, outputPos, Angle(0, 0, 0), -self:GetForward(), 300)
+					end
 				end
 			end
 		end

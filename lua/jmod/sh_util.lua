@@ -173,11 +173,17 @@ function JMod.VisCheck(pos, target, sourceEnt)
 		if IsValid(sourceEnt:GetOwner()) then table.insert(filter, sourceEnt:GetOwner()) end
 	end
 
+	if IsValid(pos) and pos.GetPos then
+		pos = pos:LocalToWorld(pos:OBBCenter())
+	end
+	if not isvector(pos) then return false end
+
 	if IsValid(target) and target.GetPos then
 		if target:GetNoDraw() then return false end
 		table.insert(filter, target)
 		target = target:LocalToWorld(target:OBBCenter())
 	end
+	if not isvector(target) then return false end
 
 	return not util.TraceLine({
 		start = pos,

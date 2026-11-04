@@ -1279,7 +1279,49 @@ net.Receive("JMod_EZradio", function()
 		return true
 	end, function(name, info, ply, ent)
 		-- click func
-		ply:ConCommand("say supply radio: " .. name)
+		if info.category ~= "Resources" then
+			ply:ConCommand("say supply radio: " .. name)
+			return
+		end
+
+		local OrderFrame = vgui.Create("DFrame")
+		OrderFrame:SetSize(350, 150)
+		OrderFrame:SetTitle("Resource order: " .. name)
+		OrderFrame:Center()
+		OrderFrame:MakePopup()
+
+		function OrderFrame:Paint(w, h)
+			EZBlurBackground(self)
+		end
+
+		local AmountSlider = vgui.Create("DNumSlider", OrderFrame)
+		AmountSlider:SetText("Amount (units)")
+		AmountSlider:SetSize(310, 30)
+		AmountSlider:SetPos(20, 35)
+		AmountSlider:SetMin(1)
+		AmountSlider:SetMax(225)
+		AmountSlider:SetValue(100)
+		AmountSlider:SetDecimals(0)
+
+		function AmountSlider:OnValueChanged(value)
+			local Amount = math.Clamp(math.floor(value + 0.5), 1, 225)
+			if value ~= Amount then
+				self:SetValue(Amount)
+			end
+		end
+
+		local OrderButton = vgui.Create("DButton", OrderFrame)
+		OrderButton:SetSize(120, 35)
+		OrderButton:SetPos((OrderFrame:GetWide() - OrderButton:GetWide()) / 2, 95)
+		OrderButton:SetText("Order")
+
+		function OrderButton:DoClick()
+			local Amount = math.Clamp(math.floor(AmountSlider:GetValue() + 0.5), 1, 225)
+			if IsValid(ent) then
+				ply:ConCommand("say supply radio: " .. name .. " " .. Amount)
+			end
+			OrderFrame:Close()
+		end
 	end, nil)
 end)
 

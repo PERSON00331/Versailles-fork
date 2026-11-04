@@ -432,6 +432,26 @@ if(SERVER)then
 				self:Speak(JMod.EZradioRequest(self, self:GetOutpostID(), ply, Message, BFFreq), ParrotPhrase, ply)
 
 				SuccessfulTransmit = true
+			elseif JMod.Config and JMod.Config.RadioSpecs.AvailablePackages then
+				local PackageName, AmountText = string.match(Message, "^(.-)%s+([%-]?%d+)$")
+				local PackageInfo = PackageName and JMod.Config.RadioSpecs.AvailablePackages[PackageName]
+
+				if PackageInfo and PackageInfo.category == "Resources" then
+					self:Speak(JMod.EZradioRequest(self, self:GetOutpostID(), ply, PackageName, BFFreq, tonumber(AmountText)), ParrotPhrase, ply)
+					SuccessfulTransmit = true
+				else
+					local Override, Words = hook.Run("JMod_CustomRadioRequest", ply, self, Message)
+					if Override then
+						SuccessfulTransmit = Override
+						if Words then
+							self:Speak(Words, ParrotPhrase, ply)
+						else
+							self:Speak("Transmission recieved", ParrotPhrase, ply)
+						end
+					else
+						self:Speak("I don't understand. Try 'help'", ParrotPhrase, ply)
+					end
+				end
 			else
 				local Override, Words = hook.Run("JMod_CustomRadioRequest", ply, self, Message)
 				if Override then

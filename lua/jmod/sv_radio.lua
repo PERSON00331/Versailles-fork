@@ -21,6 +21,7 @@ local function CreateRadioStation(teamID)
 		nextReadyTime = 0,
 		deliveryLocation = nil,
 		deliveryType = nil,
+		deliveryAmount = nil,
 		teamID = teamID,
 		nextNotifyTime = 0,
 		notified = false,
@@ -134,6 +135,42 @@ hook.Add("Think", "JMod_RADIO_THINK", function()
 					Eff:SetStart(DropVelocity)
 					util.Effect("eff_jack_gmod_jetflyby", Eff, true, true)
 					local DeliveryItems = JMod.Config.RadioSpecs.AvailablePackages[station.deliveryType].results
+					local DeliveryAmount = station.deliveryAmount
+					station.deliveryAmount = nil
+
+					if DeliveryAmount then
+						local PackageInfo = JMod.Config.RadioSpecs.AvailablePackages[station.deliveryType]
+						local ResourceClass
+
+						if isstring(DeliveryItems) then
+							ResourceClass = DeliveryItems
+						elseif istable(DeliveryItems) then
+							for _, result in ipairs(DeliveryItems) do
+								local class = istable(result) and result[1] or result
+								if isstring(class) then
+									for _, resourceEntity in pairs(JMod.EZ_RESOURCE_ENTITIES) do
+										if resourceEntity == class then
+											ResourceClass = class
+											break
+										end
+									end
+								end
+								if ResourceClass then break end
+							end
+						end
+
+						if PackageInfo.category == "Resources" and ResourceClass then
+							local MaxResource = math.max(1, 100 * ((JMod.Config.ResourceEconomy and JMod.Config.ResourceEconomy.MaxResourceMult) or 1))
+							local Remaining = DeliveryAmount
+							DeliveryItems = {}
+
+							while Remaining > 0 do
+								local Amount = math.min(Remaining, MaxResource)
+								table.insert(DeliveryItems, {ResourceClass, 1, Amount})
+								Remaining = Remaining - Amount
+							end
+						end
+					end
 					local IsChrimsas = JMod.GetHoliday() == "Christmas"
 
 					timer.Simple(.9, function()
@@ -516,11 +553,14 @@ local function TryFindSky(ent)
 	return false
 end
 
-local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime)
+local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime, quantity)
 	local Station = JMod.EZ_RADIO_STATIONS[id]
 	Station.lastCaller = transceiver
 	local Time = CurTime()
 	local DeliveryTime, Pos = deliveryTime or math.ceil(JMod.Config.RadioSpecs.DeliveryTimeMult * math.Rand(30, 60)), transceiver:GetPos()
+	if quantity then
+		DeliveryTime = math.ceil(DeliveryTime * (1 + 3 * (quantity - 1) / 224))
+	end
 	local PlyPos = ply:GetPos()
 	-- Check to see if the player or the transceiver has a better drop position
 	--print(TryFindSky(ply))
@@ -542,17 +582,26 @@ local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime)
 	Station.nextDeliveryTime = Time + DeliveryTime
 	Station.deliveryLocation = Pos
 	Station.deliveryType = pkg
+	Station.deliveryAmount = quantity
 	Station.notified = false
 	Station.nextNotifyTime = Time + (DeliveryTime - 5)
 	JMod.NotifyAllRadios(id) -- do a notify to update all radio states
+	if quantity then
+		if bff then return "ayo GOOD COPY homie, we sendin " .. quantity .. " units of " .. pkg .. " right over to " .. math.Round(Pos.x) .. " " .. math.Round(Pos.y) .. " " .. math.Round(Pos.z) .. " in prolly like " .. GetTimeString(DeliveryTime) end
+		return "roger wilco, sending " .. quantity .. " units of " .. pkg .. " to coordinates " .. math.Round(Pos.x) .. ", " .. math.Round(Pos.z) .. "; ETA " .. GetTimeString(DeliveryTime)
+	end
 	if bff then return "ayo GOOD COPY homie, we sendin " .. GetArticle(pkg) .. " " .. pkg .. " box right over to " .. math.Round(Pos.x) .. " " .. math.Round(Pos.y) .. " " .. math.Round(Pos.z) .. " in prolly like " .. GetTimeString(DeliveryTime) end
 
 	return "roger wilco, sending " .. GetArticle(pkg) .. " " .. pkg .. " package to coordinates " .. math.Round(Pos.x) .. ", " .. math.Round(Pos.z) .. "; ETA " .. GetTimeString(DeliveryTime)
 end
 
-function JMod.EZradioRequest(transceiver, id, ply, pkg, bff)
+function JMod.EZradioRequest(transceiver, id, ply, pkg, bff, quantity)
 	local PackageInfo, Station, Time = JMod.Config.RadioSpecs.AvailablePackages[pkg], JMod.EZ_RADIO_STATIONS[id], CurTime()
 	if not Station then return "No station with that ID" end
+	if not PackageInfo then return "No package with that name" end
+	if quantity ~= nil and (PackageInfo.category ~= "Resources" or not isnumber(quantity) or quantity ~= math.floor(quantity) or quantity < 1 or quantity > 225) then
+		return "Resource orders must be between 1 and 225 units"
+	end
 	JMod.NotifyAllRadios(id) -- do a notify to update all radio states
 	transceiver.BFFd = bff
 	local override, msg = hook.Run("JMod_CanRadioRequest", ply, transceiver, pkg)
@@ -587,13 +636,13 @@ function JMod.EZradioRequest(transceiver, id, ply, pkg, bff)
 					return "negative, antimatter is out of stock and not available right now"
 				end
 
-				return StartDelivery(pkg, transceiver, id, bff, ply, 20 * 60)
+				return StartDelivery(pkg, transceiver, id, bff, ply, 20 * 60, quantity)
 			end
 
 			if table.HasValue(Station.restrictedPackageStock, pkg) then
 				table.RemoveByValue(Station.restrictedPackageStock, pkg)
 
-				return StartDelivery(pkg, transceiver, id, bff, ply)
+				return StartDelivery(pkg, transceiver, id, bff, ply, nil, quantity)
 			else
 				if Station.restrictedPackageDelivering then
 					if bff then
@@ -614,7 +663,7 @@ function JMod.EZradioRequest(transceiver, id, ply, pkg, bff)
 				end
 			end
 		else
-			return StartDelivery(pkg, transceiver, id, bff, ply)
+			return StartDelivery(pkg, transceiver, id, bff, ply, nil, quantity)
 		end
 	end
 end

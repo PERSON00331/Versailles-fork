@@ -7,16 +7,30 @@ ENT.Spawnable = true
 ENT.AdminSpawnable = true
 ENT.NoSitAllowed = true
 ENT.MaxConnectionRange = 1000
+ENT.SourcePlugColor = Color(255, 0, 0)
 ENT.IconOverride = "materials/entities/ent_jack_gmod_ezitempipe.png"
 
 local function GetMachineOutputs(machine)
 	local OutputSet = {}
-	for Key, Value in pairs(machine.EZproduces or {}) do
-		local ResourceType = isnumber(Key) and Value or (Value and Key)
-		if isstring(ResourceType) and JMod.EZ_RESOURCE_ENTITIES[ResourceType] then
-			OutputSet[ResourceType] = true
+	if istable(machine.EZproduces) then
+		for Key, Value in pairs(machine.EZproduces) do
+			local ResourceType = isnumber(Key) and Value or (Value and Key)
+			if isstring(ResourceType) and JMod.EZ_RESOURCE_ENTITIES[ResourceType] then
+				OutputSet[ResourceType] = true
+			end
 		end
 	end
+
+	for _, getterName in ipairs({"GetResourceType", "GetFluidType"}) do
+		local getter = machine[getterName]
+		if isfunction(getter) then
+			local ResourceType = getter(machine)
+			if isstring(ResourceType) and JMod.EZ_RESOURCE_ENTITIES[ResourceType] then
+				OutputSet[ResourceType] = true
+			end
+		end
+	end
+
 	if machine.EZpowerProducer then
 		OutputSet[JMod.EZ_RESOURCE_TYPES.POWER] = true
 	end
@@ -89,9 +103,7 @@ if SERVER then
 			self:Remove()
 			return
 		end
-		if self.SourcePlugColor then
-			self.SourcePlug:SetColor(self.SourcePlugColor)
-		end
+		self.SourcePlug:SetColor(self.SourcePlugColor)
 
 		local SpoolConstraint, SpoolRope = constraint.Rope(self.SourcePlug, self.DestinationPlug, 0, 0, Vector(0, 0, 0), Vector(0, 0, 0), self.SpawnRopeLength or self.MaxConnectionRange, 0, 1000, self.NoSpoolRope and 0 or 3, "cable/cable2", false)
 		if not IsValid(SpoolConstraint) then
