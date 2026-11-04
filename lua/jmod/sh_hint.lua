@@ -777,6 +777,14 @@ JMod.Hints = {
 		LangKey = "hint need reactor uranium",
 		RepeatCount = 5
 	},
+	["need cpf supplies"] = {
+		LangKey = "hint need cpf supplies",
+		RepeatCount = 5
+	},
+	["need cpf power"] = {
+		LangKey = "hint need cpf power",
+		RepeatCount = 5
+	},
 	["reactor shutdown threshold"] = {
 		LangKey = "hint reactor shutdown threshold",
 		RepeatCount = 5

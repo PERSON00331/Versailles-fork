@@ -1472,6 +1472,20 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				craftingType = "toolbox",
 				description = "Machine for compressing air into EZ gas and bottling water. \nAlso cleans the air of toxins and radioactive fallout."
 			},
+			["EZ Coolant Production Facility (CPF)"] = {
+				results = "ent_jack_gmod_ezcoolantproductionfacility",
+				icon = "entities/ent_jack_gmod_ezfluid_bottler.png",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 250,
+					[JMod.EZ_RESOURCE_TYPES.STEEL] = 400,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 100,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 50
+				},
+				sizeScale = 10,
+				category = "Machines",
+				craftingType = "toolbox",
+				description = "CPF uses power to mix 50 water and 25 chemicals into 100 coolant every minute. Each upgrade grade shortens its batch time by 6 seconds. Holds 500 power, water, and chemicals."
+			},
 			["EZ Solid Fuel Generator"] = {
 				results = "ent_jack_gmod_ezsfg",
 				craftingReqs = {
@@ -1511,7 +1525,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				sizeScale = 10,
 				category = "Machines",
 				craftingType = "toolbox",
-				description = "Upgradable reactor that consumes uranium and water to produce power and fissile material. Low coolant raises core heat; a dry reactor melts down after 2 minutes."
+				description = "Upgradable reactor that consumes uranium and water to produce power and fissile material. Water keeps the reactor cool; coolant counters rising heat. Without water, production stops and a 2-minute meltdown timer starts."
 			},
 			["EZ Sprinkler"] = {
 				results = "ent_jack_gmod_ezsprinkler",

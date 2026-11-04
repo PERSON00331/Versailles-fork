@@ -202,7 +202,7 @@ function JMod.FalloutIrradiate(self, obj)
 		obj:TakeDamageInfo(Dmg)
 		---
 		JMod.GeigerCounterSound(obj, math.Rand(.1, .5))
-		JMod.Hint(v, "radioactive fallout")
+		JMod.Hint(obj, "radioactive fallout")
 
 		timer.Simple(math.Rand(.1, 2), function()
 			if IsValid(obj) then

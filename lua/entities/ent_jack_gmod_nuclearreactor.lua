@@ -21,12 +21,14 @@ ENT.JModPreferredCarryAngles = Angle(0, 0, 0)
 ENT.EZconsumes = {
 	JMod.EZ_RESOURCE_TYPES.BASICPARTS,
 	JMod.EZ_RESOURCE_TYPES.WATER,
+	JMod.EZ_RESOURCE_TYPES.COOLANT,
 	JMod.EZ_RESOURCE_TYPES.URANIUM
 }
 ENT.StaticPerfSpecs = {
 	MaxDurability = 500,
 	MaxWater = 500,
-	MaxUranium = 500
+	MaxUranium = 500,
+	MaxCoolant = 300
 }
 ENT.DynamicPerfSpecs = {
 	Armor = 3
@@ -40,6 +42,8 @@ local HEAT_RISE_TIME = 60
 local HEAT_COOLDOWN_TIME = 30
 local FALLOUT_PARTICLE_COUNT = 15
 local FALLOUT_PARTICLE_RANGE = 1500
+local MAPWIDE_FALLOUT_INTERVAL = 5
+local MAPWIDE_FALLOUT_DURATION = 300
 
 function ENT:StopReactorSound()
 	if self.SoundLoop then
@@ -60,6 +64,7 @@ function ENT:CustomSetupDataTables()
 	self:NetworkVar("Float", 2, "Water")
 	self:NetworkVar("Float", 3, "Uranium")
 	self:NetworkVar("Float", 4, "Heat")
+	self:NetworkVar("Float", 5, "Coolant")
 end
 
 if SERVER then
@@ -67,6 +72,7 @@ if SERVER then
 		self:SetProgress(0)
 		self:SetWater(self.SpawnFull and self.MaxWater or 0)
 		self:SetUranium(self.SpawnFull and self.MaxUranium or 0)
+		self:SetCoolant(self.SpawnFull and self.MaxCoolant or 0)
 		self:SetHeat(0)
 		self.LastHeatUpdate = CurTime()
 		self.NextReactorThink = 0
@@ -191,6 +197,15 @@ if SERVER then
 			Fallout.CurVel = VectorRand() * math.random(1, 500) + Vector(0, 0, 10 * RadiationMultiplier)
 		end
 
+		timer.Create("JMod_NuclearReactorMapwideFallout", MAPWIDE_FALLOUT_INTERVAL, MAPWIDE_FALLOUT_DURATION / MAPWIDE_FALLOUT_INTERVAL, function()
+			local World = game.GetWorld()
+			for _, Ent in ents.Iterator() do
+				if JMod.ShouldDamageBiologically(Ent) then
+					JMod.FalloutIrradiate(World, Ent)
+				end
+			end
+		end)
+
 		self:Remove()
 	end
 
@@ -232,11 +247,19 @@ if SERVER then
 		local HeatElapsed = math.max(Time - (self.LastHeatUpdate or Time), 0)
 		self.LastHeatUpdate = Time
 		if State == STATE_ON then
-			local WaterFraction = math.Clamp(self:GetWater() / self.MaxWater, 0, 1)
-			local HeatIncrease = (1 - WaterFraction) * 100 / HEAT_RISE_TIME * HeatElapsed
-			self:SetHeat(math.min(self:GetHeat() + HeatIncrease, 100))
+			local Water = self:GetWater()
+			local WaterFraction = math.Clamp(Water / self.MaxWater, 0, 1)
+			local HeatFraction = math.Clamp(self:GetHeat() / 100, 0, 1)
+			local HeatChange = (1 - WaterFraction) * 3 * 100 / HEAT_RISE_TIME * HeatElapsed
+			local Coolant = self:GetCoolant()
+			if Coolant > 0 and self:GetHeat() > 0 then
+				local CoolantUse = math.min(Coolant, (0.5 + HeatFraction * 2.5) * HeatElapsed)
+				self:SetCoolant(Coolant - CoolantUse)
+				HeatChange = HeatChange - CoolantUse * 1.5
+			end
+			self:SetHeat(math.Clamp(self:GetHeat() + HeatChange, 0, 100))
 
-			if self:GetWater() <= 0 then
+			if self:GetWater() <= 0 or self:GetHeat() >= 100 then
 				self.WaterOutTime = self.WaterOutTime or Time
 				if self.NextMeltdownAlarm <= Time then
 					if not self.MeltdownAlarmSound then
@@ -280,25 +303,27 @@ if SERVER then
 		return true
 	end
 elseif CLIENT then
-	local function DrawReactorDisplay(pos, ang, progress, water, uranium, heat)
+	local function DrawReactorDisplay(pos, ang, progress, water, uranium, coolant, heat)
 		local ProgressR, ProgressG, ProgressB = JMod.GoodBadColor(progress / 100)
 		local WaterR, WaterG, WaterB = JMod.GoodBadColor(water / 500)
 		local UraniumR, UraniumG, UraniumB = JMod.GoodBadColor(uranium / 500)
+		local CoolantR, CoolantG, CoolantB = JMod.GoodBadColor(coolant / 300)
 		local HeatR, HeatG, HeatB = JMod.GoodBadColor(heat / 100)
 		local HeatFraction = math.Clamp(heat / 100, 0, 1)
 
 		cam.Start3D2D(pos, ang, .16)
 		surface.SetDrawColor(10, 10, 10, 180)
-		surface.DrawRect(-140, -8, 280, 196)
+		surface.DrawRect(-140, -8, 280, 232)
 		draw.SimpleTextOutlined("PROGRESS", "JMod-Display", 0, 0, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 2, Color(0, 0, 0))
 		draw.SimpleTextOutlined(tostring(math.Round(progress)) .. "%", "JMod-Display", 0, 32, Color(ProgressR, ProgressG, ProgressB), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 2, Color(0, 0, 0))
 		draw.SimpleTextOutlined("WATER  " .. tostring(math.Round(water)) .. "/" .. 500, "JMod-Display", 0, 68, Color(WaterR, WaterG, WaterB), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 2, Color(0, 0, 0))
 		draw.SimpleTextOutlined("URANIUM  " .. tostring(math.Round(uranium)) .. "/" .. 500, "JMod-Display", 0, 104, Color(UraniumR, UraniumG, UraniumB), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 2, Color(0, 0, 0))
-		draw.SimpleTextOutlined("HEAT  " .. tostring(math.Round(heat)) .. "%", "JMod-Display", 0, 140, Color(HeatR, HeatG, HeatB), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 2, Color(0, 0, 0))
+		draw.SimpleTextOutlined("COOLANT  " .. tostring(math.Round(coolant)) .. "/" .. 300, "JMod-Display", 0, 140, Color(CoolantR, CoolantG, CoolantB), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 2, Color(0, 0, 0))
+		draw.SimpleTextOutlined("HEAT  " .. tostring(math.Round(heat)) .. "%", "JMod-Display", 0, 176, Color(HeatR, HeatG, HeatB), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP, 2, Color(0, 0, 0))
 		surface.SetDrawColor(50, 50, 50, 220)
-		surface.DrawRect(-130, 174, 260, 10)
+		surface.DrawRect(-130, 210, 260, 10)
 		surface.SetDrawColor(HeatR, HeatG, HeatB, 240)
-		surface.DrawRect(-130, 174, 260 * HeatFraction, 10)
+		surface.DrawRect(-130, 210, 260 * HeatFraction, 10)
 		cam.End3D2D()
 	end
 
@@ -313,14 +338,14 @@ elseif CLIENT then
 		local CenterY, CenterZ = (Mins.y + Maxs.y) / 2, (Mins.z + Maxs.z) / 2
 		local FrontPos = self:LocalToWorld(Vector(Mins.x - 2, CenterY, CenterZ))
 		local BackPos = self:LocalToWorld(Vector(Maxs.x + 2, CenterY, CenterZ))
-		local Progress, Water, Uranium, Heat = self:GetProgress(), self:GetWater(), self:GetUranium(), self:GetHeat()
+		local Progress, Water, Uranium, Coolant, Heat = self:GetProgress(), self:GetWater(), self:GetUranium(), self:GetCoolant(), self:GetHeat()
 
 		Ang:RotateAroundAxis(Ang:Right(), 90)
 		Ang:RotateAroundAxis(Ang:Up(), -90)
-		DrawReactorDisplay(FrontPos, Ang, Progress, Water, Uranium, Heat)
+		DrawReactorDisplay(FrontPos, Ang, Progress, Water, Uranium, Coolant, Heat)
 
 		Ang:RotateAroundAxis(Ang:Right(), 180)
-		DrawReactorDisplay(BackPos, Ang, Progress, Water, Uranium, Heat)
+		DrawReactorDisplay(BackPos, Ang, Progress, Water, Uranium, Coolant, Heat)
 	end
 
 	language.Add("ent_jack_gmod_nuclearreactor", "EZ Nuclear Reactor")
