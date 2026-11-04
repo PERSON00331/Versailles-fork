@@ -213,7 +213,7 @@ JMod.ResourceDepositInfo = {
 	},
 	[JMod.EZ_RESOURCE_TYPES.URANIUMORE] = {
 		frequency = 2,
-		avgamt = 400,
+		avgamt = 800,
 		avgsize = 200,
 		limits = {
 			nowater = true
@@ -234,7 +234,7 @@ JMod.ResourceDepositInfo = {
 		}
 	},
 	["geothermal"] = {
-		frequency = 2,
+		frequency = 4,
 		avgrate = .5,
 		avgsize = 100,
 		limits = {

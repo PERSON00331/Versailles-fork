@@ -129,7 +129,7 @@ function JMod.GetResourceCableAppearance(resType)
 	return JMod.ResourceCableAppearance.default
 end
 
-function JModResourceCable(Ent1, Ent2, resType, plugPos1, plugPos2, length, newCable)
+function JModResourceCable(Ent1, Ent2, resType, plugPos1, plugPos2, length, newCable, hideRope)
 	if not(IsValid(Ent1) and IsValid(Ent2)) then return false end
 	if Ent1 == Ent2 then return false end
 	if not resType then return false end
@@ -140,10 +140,15 @@ function JModResourceCable(Ent1, Ent2, resType, plugPos1, plugPos2, length, newC
 		plugPos2 = Ent2.EZpowerSocketPos or Ent2:OBBCenter()
 	end
 
-	local CableAppearance = JMod.GetResourceCableAppearance(resType)
-	local LengthConstraint, Rope = constraint.Rope(Ent1, Ent2, 0, 0, plugPos1, plugPos2, length, 10, 100, CableAppearance.size, "cable/cable2", false, CableAppearance.color)
+	local LengthConstraint
+	if hideRope then
+		LengthConstraint = constraint.NoCollide(Ent1, Ent2, 0, 0)
+	else
+		local CableAppearance = JMod.GetResourceCableAppearance(resType)
+		LengthConstraint = constraint.Rope(Ent1, Ent2, 0, 0, plugPos1, plugPos2, length, 10, 100, CableAppearance.size, "cable/cable2", false, CableAppearance.color)
+	end
 	if IsValid(newCable) then
-		LengthConstraint:Remove()
+		if IsValid(LengthConstraint) then LengthConstraint:Remove() end
 		LengthConstraint = newCable
 	end
 
@@ -161,9 +166,9 @@ function JModResourceCable(Ent1, Ent2, resType, plugPos1, plugPos2, length, newC
 
 	return LengthConstraint
 end
-duplicator.RegisterConstraint("JModResourceCable", JModResourceCable, "Ent1", "Ent2", "resType", "plugPos1", "plugPos2", "length", "newCable")
+duplicator.RegisterConstraint("JModResourceCable", JModResourceCable, "Ent1", "Ent2", "resType", "plugPos1", "plugPos2", "length", "newCable", "hideRope")
 
-function JMod.CreateResourceConnection(producer, consumer, resType, plugPos1, plugPos2, length, newCable, allowCrateConsumer)
+function JMod.CreateResourceConnection(producer, consumer, resType, plugPos1, plugPos2, length, newCable, allowCrateConsumer, hideRope)
 	print("[JMOD] ResConnection:", producer, consumer, resType, plugPos1, plugPos2, length, newCable)
 	if not (IsValid(producer) and IsValid(consumer) and resType) then 
 
@@ -226,7 +231,7 @@ function JMod.CreateResourceConnection(producer, consumer, resType, plugPos1, pl
 		end
 	end
 
-	local Cable = constraint.JModResourceCable(producer, consumer, resType, ProducerPluginPos, ConsumerPluginPos, length, newCable)
+	local Cable = constraint.JModResourceCable(producer, consumer, resType, ProducerPluginPos, ConsumerPluginPos, length, newCable, hideRope)
 
 	return IsValid(Cable) and Cable or false
 end

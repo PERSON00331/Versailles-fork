@@ -168,6 +168,79 @@ concommand.Add("jmod_admin_sanitizemap", function(ply, cmd, args)
 	end
 end, nil, "Removes JMod radiation and from map and players")
 
+concommand.Add("jmod_spawnresource", function(ply, cmd, args)
+	local function Reply(message)
+		if IsValid(ply) then
+			ply:PrintMessage(HUD_PRINTCONSOLE, message)
+		else
+			print(message)
+		end
+	end
+
+	if IsValid(ply) and not JMod.IsAdmin(ply) then
+		Reply("Only admins can spawn resources.")
+		return
+	end
+
+	if #args < 2 then
+		Reply("Usage: jmod_spawnresource <resource> <amount>")
+		return
+	end
+
+	local Amount = tonumber(args[#args])
+	if not isnumber(Amount) or Amount ~= Amount or Amount <= 0 or Amount > 10000 then
+		Reply("Amount must be a positive number no greater than 10000.")
+		return
+	end
+	Amount = math.Round(Amount)
+	if Amount < 1 then
+		Reply("Amount must round to at least 1.")
+		return
+	end
+
+	local ResourceType = string.lower(string.Trim(table.concat(args, " ", 1, #args - 1)))
+	local ResourceEntity = JMod.EZ_RESOURCE_ENTITIES[ResourceType]
+	if not ResourceEntity then
+		Reply("Unknown resource '" .. ResourceType .. "'. Use the resource name, e.g. uranium or basic parts.")
+		return
+	end
+
+	local SpawnPos
+	if IsValid(ply) then
+		local Trace = ply:GetEyeTrace()
+		SpawnPos = Trace.HitPos + Trace.HitNormal * 20
+	else
+		SpawnPos = Vector(0, 0, 100)
+	end
+
+	local Remaining = Amount
+	local Spawned = 0
+	local MaxResource = math.max(1, 100 * JMod.Config.ResourceEconomy.MaxResourceMult)
+	while Remaining > 0 do
+		local Resource = ents.Create(ResourceEntity)
+		if not IsValid(Resource) then
+			ErrorNoHalt("jmod_spawnresource failed to create resource entity: " .. ResourceEntity .. "\n")
+			break
+		end
+
+		local Supplies = math.min(Remaining, MaxResource)
+		Resource:SetPos(SpawnPos + VectorRand() * (20 + Spawned * 5))
+		Resource:SetAngles(AngleRand())
+		Resource:Spawn()
+		Resource:Activate()
+		JMod.SetEZowner(Resource, IsValid(ply) and ply or game.GetWorld())
+		Resource:SetEZsupplies(ResourceType, Supplies)
+		Remaining = Remaining - Supplies
+		Spawned = Spawned + 1
+	end
+
+	if Remaining > 0 then
+		Reply("Spawned " .. tostring(Amount - Remaining) .. " of " .. ResourceType .. "; failed to create the remaining resources.")
+	else
+		Reply("Spawned " .. tostring(Amount) .. " units of " .. ResourceType .. ".")
+	end
+end, nil, "Spawns a resource amount near you. Admin only. Maximum 10000 units.")
+
 concommand.Add("jmod_debug", function(ply, cmd, args)
 	if not(JMod.IsAdmin(ply)) then return end
 	--[[

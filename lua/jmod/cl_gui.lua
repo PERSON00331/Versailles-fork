@@ -31,6 +31,7 @@ list.Set("ContentCategoryIcons", "JMod - EZ Armor", JModIcon.."_armor.png" )
 list.Set("ContentCategoryIcons", "JMod - EZ Explosives", JModIcon.."_explosives.png" )
 list.Set("ContentCategoryIcons", "JMod - EZ Machines", JModIcon.."_machines.png" )
 list.Set("ContentCategoryIcons", "JMod - EZ Misc.", JModIcon..".png" )
+list.Set("ContentCategoryIcons", "JMod - EZ Pipes", JModIcon..".png" )
 list.Set("ContentCategoryIcons", "JMod - EZ Resources", JModIcon.."_resources.png" )
 list.Set("ContentCategoryIcons", "JMod - EZ Special Ammo", JModIcon.."_specialammo.png" )
 list.Set("ContentCategoryIcons", "JMod - EZ Weapons", JModIcon.."_weapons.png" )
@@ -578,7 +579,16 @@ local function PopulateItems(parent, items, typ, motherFrame, entity, enableFunc
 	end
 end
 
-local function CacheSelectionMenuIcon(name, info)
+local function CacheSelectionMenuIcon(name, info, icon)
+	if isstring(icon) then
+		JMod.SelectionMenuIcons[name] = nil
+		local IconPath = string.gsub(icon, "^materials/", "")
+		local IconMaterial = Material(IconPath)
+		if not IconMaterial:IsError() then
+			JMod.SelectionMenuIcons[name] = IconMaterial
+		end
+	end
+
 	if not JMod.SelectionMenuIcons[name] then
 		if file.Exists("materials/jmod_selection_menu_icons/" .. tostring(name) .. ".png", "GAME") then
 			JMod.SelectionMenuIcons[name] = Material("jmod_selection_menu_icons/" .. tostring(name) .. ".png")
@@ -668,7 +678,7 @@ local function StandardSelectionMenu(typ, displayString, data, entity, enableFun
 	-- first, populate icons
 	if IsValid(CurrentSelectionMenu) then return end
 	for name, info in pairs(data) do
-		CacheSelectionMenuIcon(name, info.results or "") 
+		CacheSelectionMenuIcon(name, info.results or "", info.icon)
 	end
 
 	-- then, populate info with nearby available resources

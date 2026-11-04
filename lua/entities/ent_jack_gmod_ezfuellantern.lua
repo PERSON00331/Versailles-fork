@@ -5,6 +5,7 @@ ENT.Author = "Jackarunda"
 ENT.Category = "JMod - EZ Misc."
 ENT.Information = "glhfggwpezpznore"
 ENT.PrintName = "EZ Fuel Lantern"
+ENT.IconOverride = "materials/entities/ent_jack_gmod_ezfuellantern.png"
 ENT.NoSitAllowed = true
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
@@ -15,6 +16,11 @@ ENT.JModPreferredCarryAngles = Angle(0, 180, 0)
 ENT.EZconsumes={
     JMod.EZ_RESOURCE_TYPES.FUEL
 }
+ENT.FuelResource = JMod.EZ_RESOURCE_TYPES.FUEL
+ENT.ProjectedLightBrightness = .9
+ENT.ProjectedLightRange = 600
+ENT.DynamicLightBrightness = .18
+ENT.DynamicLightRange = 900
 ENT.NextRefillTime = 0
 ---
 local STATE_OFF, STATE_ON = 0, 1
@@ -101,7 +107,7 @@ if SERVER then
 
 			if Alt then
 				if State == STATE_OFF then
-					if (self:GetFuel() <= 0) then
+					if not self.SelfPowered and self:GetFuel() <= 0 then
 						JMod.Hint(activator, "fuel")
 						return
 					end
@@ -170,8 +176,8 @@ if SERVER then
 		self.ProjTexLight:SetActiveState(true)
 		self.ProjTexLight:SetDrawSprite(true)
 		self.ProjTexLight:SetShadows(true)
-		self.ProjTexLight:SetBrightness(.5)
-		self.ProjTexLight:SetFarZ(200)
+		self.ProjTexLight:SetBrightness(self.ProjectedLightBrightness)
+		self.ProjTexLight:SetFarZ(self.ProjectedLightRange)
 		self.ProjTexLight:SetNearZ(1)
 		self.ProjTexLight:SetLightColor(Vector(255, 180, 100))
 		self.ProjTexLight:SetFlicker(true)
@@ -189,9 +195,12 @@ if SERVER then
 		local State, Fuel, Time, Pos = self:GetState(), self:GetFuel(), CurTime(), self:GetPos()
 		local Up, Right, Forward = self:GetUp(), self:GetRight(), self:GetForward()
 
-		if Fuel <= 0 then
-			self:TurnOff()
-			return
+		if not self.SelfPowered then
+			if Fuel <= 0 then
+				self:TurnOff()
+				return
+			end
+			self:SetFuel(Fuel - .0275)
 		end
 
 		if ((self:GetVelocity():Length() >= 650) or (self:WaterLevel() >= 3)) then
@@ -209,12 +218,6 @@ if SERVER then
 			self.Suffocated = 0
 		end
 
-		-- .0055 fuel per second
-		-- 10 fuel total
-		-- means about 30 minutes runtime
-		-- (we only think every 5 seconds, so mult consumption by 5)
-
-		self:SetFuel(Fuel - .0275)
 		self:NextThink(Time + 5)
 
 		return true
@@ -225,11 +228,12 @@ if SERVER then
 	end
 	--
 	function ENT:TryLoadResource(typ, amt)
+		if self.SelfPowered then return 0 end
 		if(amt <= 0)then return 0 end
 		local Time = CurTime()
 		if self.NextRefillTime > Time then return 0 end
 		local Accepted = 0
-		if(typ == JMod.EZ_RESOURCE_TYPES.FUEL)then
+		if(typ == self.FuelResource)then
 			local Fool = self:GetFuel()
 			local Missing = self.MaxFuel - Fool
 			if(Missing <= 0)then return 0 end
@@ -257,8 +261,8 @@ elseif CLIENT then
 				DLight.r = 50
 				DLight.g = 30
 				DLight.b = 20
-				DLight.Brightness = .1
-				DLight.Size = 300
+				DLight.Brightness = self.DynamicLightBrightness
+				DLight.Size = self.DynamicLightRange
 				DLight.Decay = 15000
 				DLight.DieTime = CurTime() + .3
 				DLight.Style = 0

@@ -602,10 +602,10 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					}
 				},
 				["gold"] = {
-					description = "20 units of Gold, used in advanced parts.",
+					description = "50 units of Gold, used in advanced parts.",
 					category = "Resources",
 					results = {
-						{"ent_jack_gmod_ezgold", 1, 20}
+						{"ent_jack_gmod_ezgold", 1, 50}
 					}
 				},
 				["titanium"] = {
@@ -630,10 +630,10 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					}
 				},
 				["uranium"] = {
-					description = "20 units of Uranium, used in fissile material enrichment.",
+					description = "100 units of Uranium, used in fissile material enrichment.",
 					category = "Resources",
 					results = {
-						{"ent_jack_gmod_ezuranium", 1, 20}
+						{"ent_jack_gmod_ezuranium", 1, 100}
 					}
 				},
 				["diamond"] = {
@@ -981,9 +981,33 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 15,
 					[JMod.EZ_RESOURCE_TYPES.STEEL] = 10
 				},
-				category = "Other",
+				category = "Pipes",
 				craftingType = "toolbox",
 				description = "Connect a resource source to a compatible machine or storage crate. Connect in Source > Destination order."
+			},
+			["EZ Extended Item Pipe"] = {
+				results = "ent_jack_gmod_ezitempipe_extended",
+				icon = "entities/ent_jack_gmod_ezitempipe.png",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 25,
+					[JMod.EZ_RESOURCE_TYPES.STEEL] = 20
+				},
+				category = "Pipes",
+				craftingType = "toolbox",
+				description = "A longer-range item pipe. Connect a resource source to a compatible machine or storage crate in Source > Destination order."
+			},
+			["EZ Wireless Item Pipe"] = {
+				results = "ent_jack_gmod_ezitempipe_wireless",
+				icon = "entities/ent_jack_gmod_ezitempipe.png",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 50,
+					[JMod.EZ_RESOURCE_TYPES.STEEL] = 50,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 10,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 35
+				},
+				category = "Pipes",
+				craftingType = "toolbox",
+				description = "A wireless item pipe with no range limit. Resource transfers take 0.15 seconds longer for every 350 units of distance."
 			},
 			["EZ Bomb Bay"] = {
 				results = "ent_jack_gmod_ezbombbay",
@@ -1263,6 +1287,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			},
 			["EZ Fuel Lantern"] = {
 				results = "ent_jack_gmod_ezfuellantern",
+				icon = "entities/ent_jack_gmod_ezfuellantern.png",
 				craftingReqs = {
 					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 25,
 					[JMod.EZ_RESOURCE_TYPES.CLOTH] = 10,
@@ -1270,8 +1295,35 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				},
 				sizeScale = 0.5,
 				category = "Other",
-				craftingType = "workbench",
+				craftingType = {"workbench", "toolbox"},
 				description = "Produces light when fuelled and ignited."
+			},
+			["EZ Oil Lantern"] = {
+				results = "ent_jack_gmod_ezoillantern",
+				icon = "entities/ent_jack_gmod_ezfuellantern.png",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 25,
+					[JMod.EZ_RESOURCE_TYPES.CLOTH] = 10,
+					[JMod.EZ_RESOURCE_TYPES.OIL] = 10
+				},
+				sizeScale = 0.5,
+				category = "Other",
+				craftingType = {"workbench", "toolbox"},
+				description = "Produces light when fuelled with oil and ignited."
+			},
+			["EZ Nuclear Lamp"] = {
+				results = "ent_jack_gmod_eznukelamp",
+				icon = "entities/ent_jack_gmod_ezfuellantern.png",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 25,
+					[JMod.EZ_RESOURCE_TYPES.CLOTH] = 10,
+					[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = 5,
+					[JMod.EZ_RESOURCE_TYPES.STEEL] = 15,
+				},
+				sizeScale = 0.5,
+				category = "Other",
+				craftingType = "toolbox",
+				description = "They say this lamp burns like a sun. Does not need any fuel to work."
 			},
 			["EZ Sentry"] = {
 				results = "ent_jack_gmod_ezsentry",

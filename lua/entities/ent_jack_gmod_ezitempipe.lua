@@ -2,11 +2,12 @@ AddCSLuaFile()
 ENT.Type = "anim"
 ENT.PrintName = "EZ Item Pipe"
 ENT.Author = "Jackarunda"
-ENT.Category = "JMod - EZ Misc."
+ENT.Category = "JMod - EZ Pipes"
 ENT.Spawnable = true
 ENT.AdminSpawnable = true
 ENT.NoSitAllowed = true
 ENT.MaxConnectionRange = 1000
+ENT.IconOverride = "materials/entities/ent_jack_gmod_ezitempipe.png"
 
 local function GetMachineOutputs(machine)
 	local OutputSet = {}
@@ -30,9 +31,11 @@ end
 
 local function GetAvailableMachineOutput(machine, outputs)
 	local UsedOutputs = {}
-	for _, pipe in ipairs(ents.FindByClass("ent_jack_gmod_ezitempipe")) do
-		if pipe.SourceEnt == machine and IsValid(pipe.SourceWeld) and pipe.ResourceType then
-			UsedOutputs[pipe.ResourceType] = true
+	for _, className in ipairs({"ent_jack_gmod_ezitempipe", "ent_jack_gmod_ezitempipe_extended", "ent_jack_gmod_ezitempipe_wireless"}) do
+		for _, pipe in ipairs(ents.FindByClass(className)) do
+			if pipe.SourceEnt == machine and IsValid(pipe.SourceWeld) and pipe.ResourceType then
+				UsedOutputs[pipe.ResourceType] = true
+			end
 		end
 	end
 
@@ -86,17 +89,21 @@ if SERVER then
 			self:Remove()
 			return
 		end
+		if self.SourcePlugColor then
+			self.SourcePlug:SetColor(self.SourcePlugColor)
+		end
 
-		local SpoolRope = constraint.Rope(self.SourcePlug, self.DestinationPlug, 0, 0, Vector(0, 0, 0), Vector(0, 0, 0), self.MaxConnectionRange, 0, 1000, 3, "cable/cable2", false)
-		if not IsValid(SpoolRope) then
+		local SpoolConstraint, SpoolRope = constraint.Rope(self.SourcePlug, self.DestinationPlug, 0, 0, Vector(0, 0, 0), Vector(0, 0, 0), self.SpawnRopeLength or self.MaxConnectionRange, 0, 1000, self.NoSpoolRope and 0 or 3, "cable/cable2", false)
+		if not IsValid(SpoolConstraint) then
 			self:Remove()
 			return
 		end
-		self.SpoolRope = SpoolRope
-		self.SourcePlug.Chain = SpoolRope
-		self.DestinationPlug.Chain = SpoolRope
+		if self.NoSpoolRope and IsValid(SpoolRope) then SpoolRope:SetNoDraw(true) end
+		self.SpoolRope = SpoolConstraint
+		self.SourcePlug.Chain = SpoolConstraint
+		self.DestinationPlug.Chain = SpoolConstraint
 
-		if IsValid(Owner) then
+		if IsValid(Owner) and not self.NoInitialPickup then
 			timer.Simple(.1, function()
 				if IsValid(Owner) and IsValid(self.SourcePlug) and not self:GetNW2Bool("EZitempipeConnected") then
 					Owner:PickupObject(self.SourcePlug)
@@ -161,6 +168,12 @@ if SERVER then
 			self.SourcePlugPos = hitEntity:WorldToLocal(plug:GetPos())
 			self.SourcePlug = plug
 			JMod.SetEZowner(self, player)
+			if self.NoSpoolRope and IsValid(self.SpoolRope) then
+				self.SpoolRope:Remove()
+				self.SpoolRope = nil
+				self.SourcePlug.Chain = SourceWeld
+				self.DestinationPlug.Chain = SourceWeld
+			end
 			JMod.Hint(player, "item pipe source attached")
 			if self.OutputTypes and #self.OutputTypes > 1 then
 				JMod.Hint(player, "item pipe output select")
@@ -227,7 +240,7 @@ if SERVER then
 			return
 		end
 
-		local Cable = JMod.CreateResourceConnection(Source, hitEntity, ResourceType, SourcePlugPos, DestinationPlugPos, Distance + 20, nil, DestinationIsCrate)
+		local Cable = JMod.CreateResourceConnection(Source, hitEntity, ResourceType, SourcePlugPos, DestinationPlugPos, Distance + 20, nil, DestinationIsCrate, self.NoSpoolRope)
 		if not IsValid(Cable) then
 			DestinationWeld:Remove()
 			JMod.Hint(player, "item pipe bad connection")
@@ -303,11 +316,16 @@ if SERVER then
 			end
 		end
 
+		local TransferInterval = 1 + (self.TransferDelay or 0)
 		if self.SourceEnt.IsJackyEZcrate then
 			JMod.DistributeItemPipeResources(self.SourceEnt, self.DestinationEnt, self.ResourceType)
+			if self.TransferDelayPer350 then
+				local Distance = self.SourcePlug:GetPos():Distance(self.DestinationPlug:GetPos())
+				TransferInterval = TransferInterval + math.floor(Distance / 350) * self.TransferDelayPer350
+			end
 		end
 
-		self:NextThink(CurTime() + 1)
+		self:NextThink(CurTime() + TransferInterval)
 		return true
 	end
 

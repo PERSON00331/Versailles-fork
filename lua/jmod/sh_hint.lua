@@ -411,6 +411,12 @@ JMod.Hints = {
 	["ent_jack_gmod_ezitempipe"] = {
 		LangKey = "hint ent_jack_gmod_ezitempipe"
 	},
+	["ent_jack_gmod_ezitempipe_extended"] = {
+		LangKey = "hint ent_jack_gmod_ezitempipe_extended"
+	},
+	["ent_jack_gmod_ezitempipe_wireless"] = {
+		LangKey = "hint ent_jack_gmod_ezitempipe_wireless"
+	},
 	["item pipe source attached"] = {
 		LangKey = "hint item pipe source attached",
 		RepeatCount = 5
