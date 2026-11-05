@@ -170,6 +170,14 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					Weight = 2
 				},
 				{
+					name = "hardpoint",
+					category = "Other",
+					result = "ent_jack_gmod_ezhardpoint",
+					amount = 1,
+					DeliveryTimeMult = 1,
+					Weight = 1
+				},
+				{
 					name = "uranium centrifuge",
 					category = "Machines",
 					result = "ent_jack_gmod_ezcentrifuge",
@@ -1233,6 +1241,17 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				category = "Other",
 				craftingType = "toolbox",
 				description = "Allows you to load multiple rockets\n and launch them in a reliable way."
+			},
+			["EZ Hardpoint"] = {
+				results = "ent_jack_gmod_ezhardpoint",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 25,
+					[JMod.EZ_RESOURCE_TYPES.STEEL] = 50
+				},
+				sizeScale = 1,
+				category = "Other",
+				craftingType = {"toolbox", "workbench"},
+				description = "Reusable mount for snapping on munitions."
 			},
 			["EZ Incendiary Bomb"] = {
 				results = "ent_jack_gmod_ezincendiarybomb",
