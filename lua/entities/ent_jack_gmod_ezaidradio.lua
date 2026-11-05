@@ -113,10 +113,20 @@ if(SERVER)then
 			if State > 0 then
 				if Alt then
 					if State == JMod.EZ_STATION_STATE_READY then
+						local SalePackages = {}
+						local AvailablePackages = JMod.Config and JMod.Config.RadioSpecs and JMod.Config.RadioSpecs.AvailablePackages or {}
+						for PackageName, PackageInfo in pairs(AvailablePackages) do
+							if PackageInfo.saleItemName then
+								SalePackages[PackageName] = table.FullCopy(PackageInfo)
+								SalePackages[PackageName].category = "Sales"
+							end
+						end
+
 						net.Start("JMod_EZradio")
 						net.WriteBool(false)
 						net.WriteEntity(self)
 						net.WriteString("aidradio")
+						net.WriteTable(SalePackages)
 						net.Send(activator)
 					elseif (State == JMod.EZ_STATION_STATE_BUSY) or (State == JMod.EZ_STATION_STATE_DELIVERING) then
 						self:Connect(activator, true)
@@ -363,20 +373,17 @@ if(SERVER)then
 		end
 
 		if not self:UserIsAuthorized(ply) then return false end
-		txt = string.lower(txt)
-		local NormalReq, AltReq, BFFreq = string.sub(txt, 1, 14) == "supply radio: ", string.sub(txt, 1, 11) == "aid radio: ", string.sub(txt, 1, 6) == "heyo: "
+		txt = string.lower(string.Trim(txt))
+		local NormalMessage = string.match(txt, "^supply%s+radio:%s*(.*)$")
+		local AltMessage = string.match(txt, "^aid%s+radio:%s*(.*)$")
+		local BFFMessage = string.match(txt, "^heyo%s*:%s*(.*)$")
+		local NormalReq, AltReq, BFFreq = NormalMessage ~= nil, AltMessage ~= nil, BFFMessage ~= nil
 		local SuccessfulTransmit = false
+		local RequestReceived = false
 
 		if NormalReq or AltReq or BFFreq then
-			local Message, ParrotPhrase = string.sub(txt, 15), txt
-
-			if AltReq then
-				Message = string.sub(txt, 12)
-			end
-
-			if BFFreq then
-				Message = string.sub(txt, 7)
-			end
+			local Message, ParrotPhrase = NormalMessage or AltMessage or BFFMessage, txt
+			RequestReceived = true
 
 			if istable(WireLib) then
 				WireLib.TriggerOutput(self, "LastUser", ply)
@@ -443,9 +450,17 @@ if(SERVER)then
 
 				SuccessfulTransmit = true
 			elseif AvailablePackages and AvailablePackages[OrderPackageName] then
-				local Response = isfunction(JMod.EZradioRequest)
-					and JMod.EZradioRequest(self, self:GetOutpostID(), ply, OrderPackageName, BFFreq)
-					or "Supply service is temporarily unavailable."
+				local Response
+				if isfunction(JMod.EZradioRequest) then
+					Response = JMod.EZradioRequest(self, self:GetOutpostID(), ply, OrderPackageName, BFFreq)
+				else
+					ErrorNoHalt("JMod.EZradioRequest is not available while processing an Aid Radio order.\n")
+					Response = "Supply service is temporarily unavailable."
+				end
+				if not isstring(Response) then
+					ErrorNoHalt("JMod.EZradioRequest returned no response for package '" .. tostring(OrderPackageName) .. "'.\n")
+					Response = "The outpost could not process that package right now."
+				end
 				self:Speak(Response, ParrotPhrase, ply)
 
 				SuccessfulTransmit = true
@@ -454,9 +469,17 @@ if(SERVER)then
 				local PackageInfo = PackageName and JMod.Config.RadioSpecs.AvailablePackages[PackageName]
 
 				if PackageInfo and PackageInfo.category == "Resources" then
-					local Response = isfunction(JMod.EZradioRequest)
-						and JMod.EZradioRequest(self, self:GetOutpostID(), ply, PackageName, BFFreq, tonumber(AmountText))
-						or "Supply service is temporarily unavailable."
+					local Response
+					if isfunction(JMod.EZradioRequest) then
+						Response = JMod.EZradioRequest(self, self:GetOutpostID(), ply, PackageName, BFFreq, tonumber(AmountText))
+					else
+						ErrorNoHalt("JMod.EZradioRequest is not available while processing an Aid Radio resource order.\n")
+						Response = "Supply service is temporarily unavailable."
+					end
+					if not isstring(Response) then
+						ErrorNoHalt("JMod.EZradioRequest returned no response for resource package '" .. tostring(PackageName) .. "'.\n")
+						Response = "The outpost could not process that resource order right now."
+					end
 					self:Speak(Response, ParrotPhrase, ply)
 					SuccessfulTransmit = true
 				else
@@ -491,7 +514,7 @@ if(SERVER)then
 			WireLib.TriggerOutput(self, "SuccessfulTransmit", (SuccessfulTransmit and 1) or 0)
 		end
 
-		return SuccessfulTransmit
+		return RequestReceived
 	end
 
 	function ENT:GetVoice()

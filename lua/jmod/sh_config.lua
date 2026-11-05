@@ -8,6 +8,18 @@
 	}
 end
 
+function JMod.GetEZradioResourceOrderLimit(packageInfo)
+	if not istable(packageInfo) or packageInfo.maxOrderAmount == nil then return 225 end
+
+	local Limit = packageInfo.maxOrderAmount
+	if not isnumber(Limit) or Limit < 1 or Limit > 65535 or Limit ~= math.floor(Limit) then
+		ErrorNoHalt("JMod radio package maxOrderAmount must be an integer between 1 and 65535; using 225.\n")
+		return 225
+	end
+
+	return Limit
+end
+
 function JMod.InitGlobalConfig(forceNew, configToApply)
 	local NewConfig = {
 		Note = "radio packages must have all lower-case names, see http://wiki.garrysmod.com/page/Enums/IN for key numbers",
@@ -145,9 +157,9 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			StartingOutpostCount = 3,
 			MaximumOutpostCount = 3, -- how many outposts, this makes it easier to order shit when its out of stock
 			AntimatterSupplyChance = 0.5, -- yeah
-			SaleChance = 0.35, -- idk
-			SaleInterval = 900, -- in seconds
-			SaleDuration = 300, -- in seconds
+			SaleChance = 1, -- idk
+			SaleInterval = 15, -- in seconds
+			SaleDuration = 15, -- in seconds
 			-- to determine item chance for it possibly being chosen, heres the equation for it
 			-- C% = item weight / total weight of all items * 100
 			-- so like if the total weight was 6 and an item had a weight of three itd be 50%, though thats easy to infer
@@ -158,7 +170,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					category = "Machines",
 					result = "ent_jack_gmod_ezsalvager",
 					amount = 1,
-					DeliveryTimeMult = 2,
+					DeliveryTimeMult = 2.2,
 					Weight = 3
 				},
 				{
@@ -166,7 +178,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					category = "Machines",
 					result = "ent_jack_gmod_ezwinch",
 					amount = 1,
-					DeliveryTimeMult = 1.5,
+					DeliveryTimeMult = 1.6,
 					Weight = 2
 				},
 				{
@@ -174,7 +186,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					category = "Other",
 					result = "ent_jack_gmod_ezhardpoint",
 					amount = 1,
-					DeliveryTimeMult = 1,
+					DeliveryTimeMult = 1.6,
 					Weight = 1
 				},
 				{
@@ -182,14 +194,14 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					category = "Machines",
 					result = "ent_jack_gmod_ezcentrifuge",
 					amount = 1,
-					DeliveryTimeMult = 4,
+					DeliveryTimeMult = 5,
 					Weight = .6
 				},{
 					name = "radioisotope thermoelectric generator",
 					category = "Machines",
 					result = "ent_jack_gmod_ezrtg",
 					amount = 1,
-					DeliveryTimeMult = 2.5,
+					DeliveryTimeMult = 2.8,
 					Weight = 1
 				},{
 					name = "anomalous resource",
@@ -208,6 +220,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				-- Table starting with RAND will take a random value from the rest of the table
 				-- A table with the setup {class, number} will spawn that number of class
 				-- If you add a second number to that table, if the class is an EZ resource, it will attempt to set the resource to that number
+				-- Resource packages can set maxOrderAmount (for example, maxOrderAmount = 500); no value default to 225.
 				["arms"] = {
 					description = "buncha random guns, good luck getting what you want.",
 					category = "Weapons",
@@ -241,100 +254,114 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					}
 				},
 				["basic parts"] = {
-					description = "300 units of Basic Parts, used for most crafting and machine repairs.",
+					description = "Up to 400 units of Basic Parts, used for most crafting and machine repairs.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezbasicparts", 3}
-					}
+					},
+					maxOrderAmount = 400
 				},
 				["advanced parts"] = {
-					description = "100 units of Advanced Parts, used for powerful crafting and upgrading.",
+					description = "Up to 175 units of Advanced Parts, used for powerful crafting and upgrading.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezadvparts", 1, 100}
-					}
+					},
+					maxOrderAmount = 175
 				},
 				["precision parts"] = {
-					description = "80 units of Precision Parts, used for machine upgrading and various recipes.",
+					description = "Up to 225 units of Precision Parts, used for machine upgrading and various recipes.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezprecparts", 1, 80}
-					}
+					},
+					maxOrderAmount = 225
 				},
 				["advanced textiles"] = {
-					description = "100 units of Advanced Textiles, used for armor.",
+					description = "Up to 125 units of Advanced Textiles, used for armor.",
 					category = "Resources",
-					results = "ent_jack_gmod_ezadvtextiles"
+					results = "ent_jack_gmod_ezadvtextiles",
+					maxOrderAmount = 125
 				},
 				["batteries"] = {
-					description = "400 units of Power, used for crafting and recharging electronics.",
+					description = "Up to 450 units of Power, used for crafting and recharging electronics.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezbattery", 4}
-					}
+					},
+					maxOrderAmount = 450
 				},
 				["ammo"] = {
-					description = "300 units of Ammo, for crafting and resupplying weapons and entities.",
+					description = "Up to 350 units of Ammo, for crafting and resupplying weapons and entities.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezammo", 3}
-					}
+					},
+					maxOrderAmount = 350
 				},
 				["coolant"] = {
-					description = "500 units of Coolant, for preventing machines from overheating.",
+					description = "Up to 550 units of Coolant, for preventing machines from overheating.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezcoolant", 5}
-					}
+					},
+					maxOrderAmount = 550
 				},
 				["munitions"] = {
-					description = "200 units of Munitions, used for crafting items and reloading explosive weapons and HE grenade sentries.",
+					description = "Up to 250 units of Munitions, used for crafting items and reloading explosive weapons and HE grenade sentries.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezmunitions", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["explosives"] = {
-					description = "200 units of Explosives, used for crafting explosives.",
+					description = "Up to 250 units of Explosives, used for crafting explosives.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezexplosives", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["chemicals"] = {
-					description = "200 Units of Chemicals, used for crafting items and reloading filters in HAZMAT suits, gasmasks, and respirators.",
+					description = "Up to 250 units of Chemicals, used for crafting items and reloading filters in HAZMAT suits, gasmasks, and respirators.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezchemicals", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["fuel"] = {
-					description = "200 units of Fuel, used for crafting items and running generators.",
+					description = "Up to 250 units of Fuel, used for crafting items and running generators.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezfuel", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["coal"] = {
-					description = "300 units of Coal, used for running generators.",
+					description = "Up to 350 units of Coal, used for running generators.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezcoal", 3}
-					}
+					},
+					maxOrderAmount = 350
 				},
 				["propellant"] = {
-					description = "400 units of Propellant, used for crafting items.",
+					description = "Up to 450 units of Propellant, used for crafting items.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezpropellant", 4}
-					}
+					},
+					maxOrderAmount = 450
 				},
 				["gas"] = {
-					description = "300 units of Gas, used for crafting items and powering the EZ Workbench",
+					description = "Up to 350 units of Gas, used for crafting items and powering the EZ Workbench",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezgas", 3}
-					}
+					},
+					maxOrderAmount = 350
 				},
 				["toolboxes"] = {
 					description = "Two toolboxes for crafting, nailing, salvaging and packaging items. ",
@@ -344,18 +371,20 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					}
 				},
 				["rations"] = {
-					description = "500 units of Nutrients, to be eaten by players. Can overcharge health.",
+					description = "Up to 550 units of Nutrients, to be eaten by players. Can overcharge health.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_eznutrients", 5}
-					}
+					},
+					maxOrderAmount = 550
 				},
 				["medical supplies"] = {
-					description = "200 units of Medical Supplies, for resupplying the EZ Automated Field Hospital and EZ Medkit.",
+					description = "Up to 250 units of Medical Supplies, for resupplying the EZ Automated Field Hospital and EZ Medkit.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezmedsupplies", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["resource crate"] = {
 					description = "A box used for exclusively storing EZ Resources.",
@@ -549,9 +578,10 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					}
 				},
 				["antimatter"] = {
-					description = "100 units of Antimatter. Be careful with it, unless you want to evaporate your base!",
+					description = "Up to 150 units of Antimatter. Be careful with it, unless you want to evaporate your base!",
 					category = "Resources",
-					results = "ent_jack_gmod_ezantimatter"
+					results = "ent_jack_gmod_ezantimatter",
+					maxOrderAmount = 150
 				},
 				["dynamite"] = {
 					description = "12 dynamite sticks for comical explosions.",
@@ -626,147 +656,168 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					}
 				},
 				["steel"] = {
-					description = "200 units of Steel, used in basic parts and some weapons.",
+					description = "Up to 250 units of Steel, used in basic parts and some weapons.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezsteel", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["copper"] = {
-					description = "100 units of Copper, used in basic parts.",
+					description = "Up to 175 units of Copper, used in basic parts.",
 					category = "Resources",
-					results = "ent_jack_gmod_ezcopper"
+					results = "ent_jack_gmod_ezcopper",
+					maxOrderAmount = 175
 				},
 				["aluminum"] = {
-					description = "200 units of Aluminum, used in basic parts.",
+					description = "Up to 250 units of Aluminum, used in basic parts.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezaluminum", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["lead"] = {
-					description = "200 units of Lead, very useful in ammo production for fending off other players.",
+					description = "Up to 250 units of Lead, very useful in ammo production for fending off other players.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezlead", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["silver"] = {
-					description = "50 units of Silver, used for high tier stuff.",
+					description = "Up to 175 units of Silver, used for high tier stuff.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezsilver", 1, 50}
-					}
+					},
+					maxOrderAmount = 175
 				},
 				["gold"] = {
-					description = "50 units of Gold, used in advanced parts.",
+					description = "Up to 125 units of Gold, used in advanced parts.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezgold", 1, 50}
-					}
+					},
+					maxOrderAmount = 125
 				},
 				["titanium"] = {
-					description = "50 units of Titanium, used in high-tier weaponry.",
+					description = "Up to 125 units of Titanium, used in high-tier weaponry.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_eztitanium", 1, 50}
-					}
+					},
+					maxOrderAmount = 125
 				},
 				["tungsten"] = {
-					description = "50 units of Tungsten, used in high-tier weaponry.",
+					description = "Up to 125 units of Tungsten, used in high-tier weaponry.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_eztungsten", 1, 50}
-					}
+					},
+					maxOrderAmount = 125
 				},
 				["platinum"] = {
-					description = "10 units of Platinum, used in advanced parts.",
+					description = "Up to 50 units of Platinum, used in advanced parts.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezplatinum", 1, 10}
-					}
+					},
+					maxOrderAmount = 50
 				},
 				["uranium"] = {
-					description = "100 units of Uranium, used in fissile material enrichment.",
+					description = "Up to 150 units of Uranium, used in fissile material enrichment.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezuranium", 1, 100}
-					}
+					},
+					maxOrderAmount = 150
 				},
 				["diamond"] = {
-					description = "10 units of Diamond, used in advanced parts.",
+					description = "Up to 50 units of Diamond, used in advanced parts.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezdiamond", 1, 20}
-					}
+					},
+					maxOrderAmount = 50
 				},
 				["water"] = {
-					description = "600 units of Water, used in coolant, chemicals, and nutrients.",
+					description = "Up to 650 units of Water, used in coolant, chemicals, and nutrients.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezwater", 6}
-					}
+					},
+					maxOrderAmount = 650
 				},
 				["wood"] = {
-					description = "200 units of Wood, used in paper and electricity production.",
+					description = "Up to 250 units of Wood, used in paper and electricity production.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezwood", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["paper"] = {
-					description = "200 units of Paper, used in nutrients.",
+					description = "Up to 250 units of Paper, used in nutrients.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezpaper", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["plastic"] = {
-					description = "200 units of Plastic, used in basic parts.",
+					description = "Up to 250 units of Plastic, used in basic parts.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezplastic", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["organics"] = {
-					description = "200 units of Organics, used in nutrients.",
+					description = "Up to 250 units of Organics, used in nutrients.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezorganics", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["oil"] = {
-					description = "100 units of Oil, used in plastic, fuel, and rubber.",
+					description = "Up to 350 units of Oil, used in plastic, fuel, and rubber.",
 					category = "Resources",
-					results = "ent_jack_gmod_ezoil"
+					results = "ent_jack_gmod_ezoil",
+					maxOrderAmount = 350
 				},
 				["cloth"] = {
-					description = "200 units of Cloth, used in advanced textiles.",
+					description = "Up to 250 units of Cloth, used in advanced textiles.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezcloth", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["rubber"] = {
-					description = "200 units of Rubber, used in basic parts.",
+					description = "Up to 250 units of Rubber, used in basic parts.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezrubber", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["glass"] = {
-					description = "200 units of Glass, used in basic parts.",
+					description = "Up to 250 units of Glass, used in basic parts.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezglass", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 				["ceramic"] = {
-					description = "200 units of Ceramic, used in armor.",
+					description = "Up to 250 units of Ceramic, used in armor.",
 					category = "Resources",
 					results = {
 						{"ent_jack_gmod_ezceramic", 2}
-					}
+					},
+					maxOrderAmount = 250
 				},
 			},
 			RestrictedPackages = {"antimatter", "bioweapon canister"},
@@ -3146,6 +3197,19 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 		return
 	end
 
+	local RadioOrderLimitsMigrated = false
+	local DefaultRadioPackages = NewConfig.RadioSpecs and NewConfig.RadioSpecs.AvailablePackages or {}
+	local ConfigRadioPackages = JMod.Config.RadioSpecs and JMod.Config.RadioSpecs.AvailablePackages
+	if istable(ConfigRadioPackages) then
+		for PackageName, DefaultPackage in pairs(DefaultRadioPackages) do
+			local ConfigPackage = ConfigRadioPackages[PackageName]
+			if istable(ConfigPackage) and istable(DefaultPackage) and ConfigPackage.maxOrderAmount == nil and isnumber(DefaultPackage.maxOrderAmount) then
+				ConfigPackage.maxOrderAmount = DefaultPackage.maxOrderAmount
+				RadioOrderLimitsMigrated = true
+			end
+		end
+	end
+
 	local function MigrateRecipe(name, oldRequirements, newRequirements)
 		local recipe = JMod.Config.Craftables and JMod.Config.Craftables[name]
 		if not recipe or not istable(recipe.craftingReqs) then return false end
@@ -3188,7 +3252,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 	})
 	local RecipesMigrated = BlackHoleRecipeMigrated or ThermonukeRecipeMigrated
 
-	if SERVER and RecipesMigrated then
+	if SERVER and (RecipesMigrated or RadioOrderLimitsMigrated) then
 		file.Write("jmod_config.txt", util.TableToJSON(JMod.Config, true))
 	end
 

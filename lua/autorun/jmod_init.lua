@@ -336,7 +336,7 @@ for i, f in pairs(file.Find("jmod/*.lua", "LUA")) do
 		AddCSLuaFile("jmod/" .. f)
 		include("jmod/" .. f)
 	elseif string.Left(f, 3) == "sv_" then
-		if SERVER then
+		if SERVER and f ~= "sv_radio.lua" then
 			include("jmod/" .. f)
 		end
 	elseif string.Left(f, 3) == "cl_" then
@@ -348,6 +348,10 @@ for i, f in pairs(file.Find("jmod/*.lua", "LUA")) do
 	else
 		print("JMod detected unaccounted-for lua file '" .. f .. "'-check prefixes!")
 	end
+end
+
+if SERVER then
+	include("jmod/sv_radio.lua")
 end
 
 local PrimitiveBenchReqs = {[JMod.EZ_RESOURCE_TYPES.WOOD] = 25, [JMod.EZ_RESOURCE_TYPES.CERAMIC] = 15, [JMod.EZ_RESOURCE_TYPES.ALUMINUM] = 8}

@@ -1,4 +1,5 @@
 ﻿-- EZ Radio Code --
+JMod.EZ_RADIO_STATIONS = JMod.EZ_RADIO_STATIONS or {}
 JMod.NotifyAllMsgs = {
 	["normal"] = {
 		["good drop"] = "good drop, package away, returning to base",
@@ -617,13 +618,13 @@ local function TryFindSky(ent)
 	return false
 end
 
-local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime, quantity, deliveryTimeMult)
+local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime, quantity, deliveryTimeMult, quantityTimeScale)
 	local Station = JMod.EZ_RADIO_STATIONS[id]
 	Station.lastCaller = transceiver
 	local Time = CurTime()
 	local DeliveryTime, Pos = deliveryTime or math.ceil(JMod.Config.RadioSpecs.DeliveryTimeMult * math.Rand(30, 60)), transceiver:GetPos()
 	if quantity then
-		DeliveryTime = math.ceil(DeliveryTime * (1 + 3 * (quantity - 1) / 224))
+		DeliveryTime = math.ceil(DeliveryTime * (1 + (quantityTimeScale or 3) * (quantity - 1) / 224))
 	end
 	if isnumber(deliveryTimeMult) and deliveryTimeMult > 0 then
 		DeliveryTime = math.ceil(DeliveryTime * deliveryTimeMult)
@@ -650,7 +651,8 @@ local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime, quant
 	Station.deliveryLocation = Pos
 	Station.deliveryType = pkg
 	local PackageInfo = JMod.Config.RadioSpecs.AvailablePackages[pkg]
-	Station.deliveryResults = PackageInfo and table.FullCopy(PackageInfo.results) or nil
+	local DeliveryResults = PackageInfo and PackageInfo.results
+	Station.deliveryResults = istable(DeliveryResults) and table.FullCopy(DeliveryResults) or DeliveryResults
 	Station.deliveryCategory = PackageInfo and PackageInfo.category or nil
 	Station.deliveryAmount = quantity
 	Station.notified = false
@@ -668,6 +670,12 @@ end
 function JMod.EZradioRequest(transceiver, id, ply, pkg, bff, quantity)
 	local PackageInfo, Station, Time = JMod.Config.RadioSpecs.AvailablePackages[pkg], JMod.EZ_RADIO_STATIONS[id], CurTime()
 	if not Station then return "No station with that ID" end
+	if Station.state ~= JMod.EZ_STATION_STATE_READY
+		and Station.state ~= JMod.EZ_STATION_STATE_DELIVERING
+		and Station.state ~= JMod.EZ_STATION_STATE_BUSY then
+		ErrorNoHalt("JMod radio outpost " .. tostring(id) .. " has invalid state " .. tostring(Station.state) .. "; resetting it to ready.\n")
+		Station.state = JMod.EZ_STATION_STATE_READY
+	end
 	if PackageInfo and PackageInfo.saleItemName and PackageInfo.saleExpiresAt and PackageInfo.saleExpiresAt <= Time then
 		JMod.Config.RadioSpecs.AvailablePackages[pkg] = nil
 		if ActiveSalePackage == pkg then
@@ -677,8 +685,13 @@ function JMod.EZradioRequest(transceiver, id, ply, pkg, bff, quantity)
 		return "That limited-time deal has expired."
 	end
 	if not PackageInfo then return "No package with that name" end
-	if quantity ~= nil and (PackageInfo.category ~= "Resources" or not isnumber(quantity) or quantity ~= math.floor(quantity) or quantity < 1 or quantity > 225) then
-		return "Resource orders must be between 1 and 225 units"
+	if quantity ~= nil and PackageInfo.category == "Resources" then
+		local MaxOrderAmount = JMod.GetEZradioResourceOrderLimit(PackageInfo)
+		if not isnumber(quantity) or quantity ~= math.floor(quantity) or quantity < 1 or quantity > MaxOrderAmount then
+			return "Resource orders for " .. pkg .. " must be between 1 and " .. MaxOrderAmount .. " units"
+		end
+	elseif quantity ~= nil then
+		return "Only resource orders can specify a quantity"
 	end
 	JMod.NotifyAllRadios(id) -- do a notify to update all radio states
 	transceiver.BFFd = bff
@@ -715,7 +728,7 @@ function JMod.EZradioRequest(transceiver, id, ply, pkg, bff, quantity)
 					return "negative, antimatter is out of stock and not available right now"
 				end
 
-				return StartDelivery(pkg, transceiver, id, bff, ply, 20 * 60, quantity)
+				return StartDelivery(pkg, transceiver, id, bff, ply, 20 * 60, quantity, nil, 1)
 			end
 
 			if table.HasValue(Station.restrictedPackageStock, pkg) then
@@ -766,8 +779,66 @@ hook.Add("PlayerSay", "JMod_PLAYERSAY", function(ply, txt)
 	end
 
 	local lowerTxt = string.lower(txt)
+	local trimmedTxt = string.Trim(lowerTxt)
+	local RadioRequestText = string.match(trimmedTxt, "^.-:%s*(supply%s+radio:.*)$")
+		or string.match(trimmedTxt, "^.-:%s*(aid%s+radio:.*)$")
+		or string.match(trimmedTxt, "^.-:%s*(heyo%s*:.*)$")
+		or trimmedTxt
+	local IsRadioRequest = string.match(RadioRequestText, "^supply%s+radio:") ~= nil
+		or string.match(RadioRequestText, "^aid%s+radio:") ~= nil
+		or string.match(RadioRequestText, "^heyo%s*:")
 
-	for _, v in pairs(ents.FindInSphere(ply:GetPos(), 150)) do
+	if IsRadioRequest then
+		local NearbyRadio, AuthorizedRadio, ReadyRadio
+		local NearestDistance = 300 * 300
+		local NearestAuthorizedDistance = NearestDistance
+		local NearestReadyDistance = NearestDistance
+
+		for _, radio in ipairs(FindEZradios()) do
+			local Distance = radio:GetPos():DistToSqr(ply:GetPos())
+			if Distance <= 300 * 300 and (not IsValid(NearbyRadio) or Distance < NearestDistance) then
+				NearbyRadio = radio
+				NearestDistance = Distance
+			end
+
+			if Distance <= 300 * 300 and radio:UserIsAuthorized(ply) then
+				if not IsValid(AuthorizedRadio) or Distance < NearestAuthorizedDistance then
+					AuthorizedRadio = radio
+					NearestAuthorizedDistance = Distance
+				end
+
+				if radio:GetState() >= JMod.EZ_STATION_STATE_READY
+					and (not IsValid(ReadyRadio) or Distance < NearestReadyDistance) then
+					ReadyRadio = radio
+					NearestReadyDistance = Distance
+				end
+			end
+		end
+
+		local Radio = ReadyRadio or AuthorizedRadio or NearbyRadio
+		if not IsValid(Radio) then
+			ply:PrintMessage(HUD_PRINTCENTER, "No Aid Radio in range")
+			return ""
+		end
+
+		if not Radio:UserIsAuthorized(ply) then
+			ply:PrintMessage(HUD_PRINTCENTER, "You are not authorized to use this Aid Radio")
+			return ""
+		end
+
+		if Radio:GetState() < JMod.EZ_STATION_STATE_READY then
+			ply:PrintMessage(HUD_PRINTCENTER, "Aid Radio is not connected yet; turn it on and wait for connection")
+			return ""
+		end
+
+		if not Radio:EZreceiveSpeech(ply, RadioRequestText) then
+			ply:PrintMessage(HUD_PRINTCENTER, "Aid Radio could not process the request; check its power and sky access")
+		end
+
+		return ""
+	end
+
+	for _, v in pairs(ents.FindInSphere(ply:GetPos(), 200)) do
 		if v.EZreceiveSpeech and v:EZreceiveSpeech(ply, txt) then return "" end
 	end
 

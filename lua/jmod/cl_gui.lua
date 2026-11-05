@@ -673,7 +673,7 @@ local function CacheSelectionMenuIcon(name, info, icon)
 	return JMod.SelectionMenuIcons[name]
 end
 
-local function StandardSelectionMenu(typ, displayString, data, entity, enableFunc, clickFunc, sidePanelFunc, mult)
+local function StandardSelectionMenu(typ, displayString, data, entity, enableFunc, clickFunc, sidePanelFunc, mult, extraCategories)
 	mult = mult or 1
 	-- first, populate icons
 	if IsValid(CurrentSelectionMenu) then return end
@@ -727,6 +727,9 @@ local function StandardSelectionMenu(typ, displayString, data, entity, enableFun
 		local Category = itemInfo.category or "Other"
 		Categories[Category] = Categories[Category] or {}
 		Categories[Category][itemName] = itemInfo
+	end
+	for _, Category in ipairs(extraCategories or {}) do
+		Categories[Category] = Categories[Category] or {}
 	end
 
 	local TabPanel = vgui.Create("DPanel", MotherFrame)
@@ -1232,13 +1235,28 @@ net.Receive("JMod_ModifyMachine", function()
 	end
 end)
 
-local function GetOrderables()
+local function GetOrderables(SalePackages)
 	local Tab = {}
-	if not (JMod.Config and JMod.Config.RadioSpecs and JMod.Config.RadioSpecs.AvailablePackages) then return Tab end
-
-	Tab = table.FullCopy(JMod.Config.RadioSpecs.AvailablePackages)
+	local AvailablePackages = JMod.Config and JMod.Config.RadioSpecs and JMod.Config.RadioSpecs.AvailablePackages
+	if AvailablePackages then
+		Tab = table.FullCopy(AvailablePackages)
+	end
+	for PackageName, PackageInfo in pairs(SalePackages or {}) do
+		PackageInfo.category = "Sales"
+		Tab[PackageName] = PackageInfo
+	end
 
 	return Tab
+end
+
+local function RequestRadioOrder(ply, radio, packageName, quantity)
+	if not IsValid(ply) or not IsValid(radio) then return end
+
+	net.Start("JMod_EZradioRequest")
+	net.WriteEntity(radio)
+	net.WriteString(packageName)
+	net.WriteUInt(quantity or 0, 16)
+	net.SendToServer()
 end
 
 net.Receive("JMod_EZradio", function()
@@ -1268,7 +1286,9 @@ net.Receive("JMod_EZradio", function()
 	end
 
 	local Radio = net.ReadEntity()
-	local Orderables = GetOrderables(net.ReadString())
+	net.ReadString()
+	local SalePackages = net.ReadTable()
+	local Orderables = GetOrderables(SalePackages)
 
 	if IsValid(CurrentSelectionMenu) then return end
 	local MotherFrame = StandardSelectionMenu('selecting', "EZ Radio", Orderables, Radio, function(name, info, ply, ent)
@@ -1280,7 +1300,7 @@ net.Receive("JMod_EZradio", function()
 	end, function(name, info, ply, ent)
 		-- click func
 		if info.category ~= "Resources" then
-			ply:ConCommand("say supply radio: " .. name)
+			RequestRadioOrder(ply, ent, name)
 			return
 		end
 
@@ -1295,16 +1315,17 @@ net.Receive("JMod_EZradio", function()
 		end
 
 		local AmountSlider = vgui.Create("DNumSlider", OrderFrame)
+		local MaxOrderAmount = JMod.GetEZradioResourceOrderLimit(info)
 		AmountSlider:SetText("Amount (units)")
 		AmountSlider:SetSize(310, 30)
 		AmountSlider:SetPos(20, 35)
 		AmountSlider:SetMin(1)
-		AmountSlider:SetMax(225)
-		AmountSlider:SetValue(100)
+		AmountSlider:SetMax(MaxOrderAmount)
+		AmountSlider:SetValue(math.min(100, MaxOrderAmount))
 		AmountSlider:SetDecimals(0)
 
 		function AmountSlider:OnValueChanged(value)
-			local Amount = math.Clamp(math.floor(value + 0.5), 1, 225)
+			local Amount = math.Clamp(math.floor(value + 0.5), 1, MaxOrderAmount)
 			if value ~= Amount then
 				self:SetValue(Amount)
 			end
@@ -1316,13 +1337,13 @@ net.Receive("JMod_EZradio", function()
 		OrderButton:SetText("Order")
 
 		function OrderButton:DoClick()
-			local Amount = math.Clamp(math.floor(AmountSlider:GetValue() + 0.5), 1, 225)
+			local Amount = math.Clamp(math.floor(AmountSlider:GetValue() + 0.5), 1, MaxOrderAmount)
 			if IsValid(ent) then
-				ply:ConCommand("say supply radio: " .. name .. " " .. Amount)
+				RequestRadioOrder(ply, ent, name, Amount)
 			end
 			OrderFrame:Close()
 		end
-	end, nil)
+	end, nil, 1, {"Sales"})
 end)
 
 local OpenDropdown = nil

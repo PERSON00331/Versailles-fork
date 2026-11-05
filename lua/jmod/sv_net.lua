@@ -15,6 +15,7 @@ util.AddNetworkString("JMod_EZarmorSync")
 util.AddNetworkString("JMod_Inventory")
 util.AddNetworkString("JMod_ItemInventory") -- Item inventory
 util.AddNetworkString("JMod_EZradio")
+util.AddNetworkString("JMod_EZradioRequest")
 util.AddNetworkString("JMod_EZweaponMod")
 util.AddNetworkString("JMod_Bleeding")
 util.AddNetworkString("JMod_SFX")
@@ -29,6 +30,73 @@ util.AddNetworkString("JMod_Debugging") -- engineer gaming
 util.AddNetworkString("JMod_ConfigUI")
 util.AddNetworkString("JMod_ApplyConfig")
 util.AddNetworkString("JMod_LiquidParticle")
+
+net.Receive("JMod_EZradioRequest", function(_, ply)
+	if not IsValid(ply) or not ply:Alive() then return end
+
+	local radio = net.ReadEntity()
+	local packageName = string.lower(string.Trim(net.ReadString()))
+	local quantity = net.ReadUInt(16)
+	if not isfunction(JMod.EZradioRequest) and not JMod.EZradioModuleLoadAttempted then
+		JMod.EZradioModuleLoadAttempted = true
+		include("jmod/sv_radio.lua")
+	end
+
+	if not IsValid(radio) or radio:GetClass() ~= "ent_jack_gmod_ezaidradio" then
+		ply:PrintMessage(HUD_PRINTCENTER, "Aid Radio is unavailable")
+		return
+	end
+	if radio:GetPos():DistToSqr(ply:GetPos()) > 200 * 200 then
+		ply:PrintMessage(HUD_PRINTCENTER, "Move closer to the Aid Radio")
+		return
+	end
+	if not radio.UserIsAuthorized or not radio:UserIsAuthorized(ply) then
+		ply:PrintMessage(HUD_PRINTCENTER, "You are not authorized to use this Aid Radio")
+		return
+	end
+	if not radio.GetState or radio:GetState() < JMod.EZ_STATION_STATE_READY then
+		ply:PrintMessage(HUD_PRINTCENTER, "Aid Radio is not connected yet")
+		return
+	end
+
+	local packageInfo = JMod.Config and JMod.Config.RadioSpecs and JMod.Config.RadioSpecs.AvailablePackages
+		and JMod.Config.RadioSpecs.AvailablePackages[packageName]
+	if not packageInfo then
+		ply:PrintMessage(HUD_PRINTCENTER, "That package is no longer available")
+		return
+	end
+
+	local orderQuantity
+	if packageInfo.category == "Resources" then
+		local MaxOrderAmount = JMod.GetEZradioResourceOrderLimit(packageInfo)
+		if quantity < 1 or quantity > MaxOrderAmount then
+			ply:PrintMessage(HUD_PRINTCENTER, "Resource orders for " .. packageName .. " must be between 1 and " .. MaxOrderAmount .. " units")
+			return
+		end
+		orderQuantity = quantity
+	end
+
+	if not isfunction(JMod.EZradioRequest) then
+		ErrorNoHalt("JMod.EZradioRequest is still unavailable after loading jmod/sv_radio.lua; check the server console for an earlier Lua error.\n")
+		ply:PrintMessage(HUD_PRINTCENTER, "Supply service is temporarily unavailable")
+		return
+	end
+
+	local response = JMod.EZradioRequest(radio, radio:GetOutpostID(), ply, packageName, false, orderQuantity)
+	if not isstring(response) then
+		ErrorNoHalt("JMod.EZradioRequest returned no response for menu package '" .. packageName .. "'.\n")
+		ply:PrintMessage(HUD_PRINTCENTER, "The outpost could not process that package right now")
+		return
+	end
+
+	radio.BFFd = false
+	radio:Speak(response)
+	if istable(WireLib) then
+		WireLib.TriggerOutput(radio, "LastUser", ply)
+		WireLib.TriggerOutput(radio, "RecievedSpeech", packageName)
+		WireLib.TriggerOutput(radio, "SuccessfulTransmit", 1)
+	end
+end)
 
 net.Receive("JMod_Friends", function(length, ply)
 	local List, Good = net.ReadTable(), true
