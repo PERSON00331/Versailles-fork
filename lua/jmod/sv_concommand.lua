@@ -116,6 +116,27 @@ function JMod.EZ_Remote_Trigger(ply)
 	end)
 end
 
+hook.Add("PlayerSay", "JMod_CHATCOMMANDS", function(ply, text)
+	if not IsValid(ply) or not ply:Alive() then return end
+
+	local command = string.lower(text)
+	if command == "*trigger*" then
+		JMod.EZ_Remote_Trigger(ply)
+	elseif command == "*bomb*" then
+		JMod.EZ_BombDrop(ply)
+	elseif command == "*launch*" then
+		JMod.EZ_WeaponLaunch(ply)
+	elseif command == "*inv*" or command == "*inventory*" then
+		JMod.EZ_Open_Inventory(ply)
+	elseif command == "*scrounge*" or command == "*scavange*" then
+		JMod.EZ_ScroungeArea(ply)
+	else
+		return
+	end
+
+	return ""
+end)
+
 concommand.Add("jmod_friends", function(ply)
 	net.Start("JMod_Friends")
 	net.WriteBit(false)

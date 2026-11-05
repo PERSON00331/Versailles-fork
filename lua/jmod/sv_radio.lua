@@ -134,12 +134,15 @@ hook.Add("Think", "JMod_RADIO_THINK", function()
 					Eff:SetOrigin(DropPos)
 					Eff:SetStart(DropVelocity)
 					util.Effect("eff_jack_gmod_jetflyby", Eff, true, true)
-					local DeliveryItems = JMod.Config.RadioSpecs.AvailablePackages[station.deliveryType].results
+					local PackageInfo = JMod.Config.RadioSpecs.AvailablePackages[station.deliveryType]
+					local DeliveryItems = station.deliveryResults or (PackageInfo and PackageInfo.results)
+					local DeliveryCategory = station.deliveryCategory or (PackageInfo and PackageInfo.category)
 					local DeliveryAmount = station.deliveryAmount
 					station.deliveryAmount = nil
+					station.deliveryResults = nil
+					station.deliveryCategory = nil
 
 					if DeliveryAmount then
-						local PackageInfo = JMod.Config.RadioSpecs.AvailablePackages[station.deliveryType]
 						local ResourceClass
 
 						if isstring(DeliveryItems) then
@@ -159,7 +162,7 @@ hook.Add("Think", "JMod_RADIO_THINK", function()
 							end
 						end
 
-						if PackageInfo.category == "Resources" and ResourceClass then
+						if DeliveryCategory == "Resources" and ResourceClass then
 							local MaxResource = math.max(1, 100 * ((JMod.Config.ResourceEconomy and JMod.Config.ResourceEconomy.MaxResourceMult) or 1))
 							local Remaining = DeliveryAmount
 							DeliveryItems = {}
@@ -218,89 +221,6 @@ hook.Add("Think", "JMod_RADIO_THINK", function()
 	end
 end)
 
-hook.Add("PlayerSay", "JMod_PLAYERSAY", function(ply, txt)
-	if not IsValid(ply) then return end
-	if not ply:Alive() then return end
-
-	if txt == "hi everyone" then
-		JMod.Hint(ply, "idiot")
-	end
-
-	local lowerTxt = string.lower(txt)
-
-	if lowerTxt == "*trigger*" then
-		JMod.EZ_Remote_Trigger(ply)
-
-		return ""
-	end
-
-	if lowerTxt == "*bomb*" then
-		JMod.EZ_BombDrop(ply)
-
-		return ""
-	end
-
-	if lowerTxt == "*launch*" then
-		JMod.EZ_WeaponLaunch(ply)
-
-		return ""
-	end
-
-	if (lowerTxt == "*inv*") or (lowerTxt == "*inventory*") then
-		JMod.EZ_Open_Inventory(ply)
-
-		return ""
-	end
-
-	if (lowerTxt == "*scrounge*") or (lowerTxt == "*scavange*") then
-		JMod.EZ_ScroungeArea(ply)
-
-		return ""
-	end
-
-	for k, v in pairs(ents.FindInSphere(ply:GetPos(), 150)) do
-		if v.EZreceiveSpeech then
-			if v:EZreceiveSpeech(ply, txt) then return "" end -- hide the player's radio chatter from the server
-		end
-	end
-
-	if JMod.PlyHasArmorEff(ply, "teamComms") then
-		for id, data in pairs(ply.EZarmor.items) do
-			local Info = JMod.ArmorTable[data.name]
-			if not Info then continue end
-
-			if Info.eff and Info.eff.teamComms then
-				local SubtractAmt = JMod.Config.Armor.DegradationMult / 2
-				data.chrg.power = math.Clamp(data.chrg.power - SubtractAmt, 0, 9e9)
-
-				if data.chrg.power <= Info.chrg.power * .25 then
-					JMod.EZarmorWarning(ply, "armor's electrical charge is almost depleted!")
-				end
-			end
-		end
-
-		local bestradio = nil
-		
-		for _, v in ipairs(FindEZradios()) do
-			if v:UserIsAuthorized(ply) and (not(bestradio) or (bestradio:GetPos():DistToSqr(ply:GetPos()) > v:GetPos():DistToSqr(ply:GetPos()))) then
-				local RadioState = bestradio and bestradio:GetState() or 4
-				if (v.GetState and v:GetState() <= RadioState) then
-					bestradio = v
-				end
-			end
-		end
-
-		local ExplodedString = string.Explode(" ", lowerTxt)
-		if bestradio and bestradio:EZreceiveSpeech(ply, txt) then 
-
-			return "" 
-		elseif not(bestradio) and ((ExplodedString[1] == "supply") or (ExplodedString[1] == "aid")) and (ExplodedString[2] == "radio:") then
-
-			ply:PrintMessage(HUD_PRINTCENTER, "No good radios in range")
-		end
-	end
-end)
-
 function JMod.EZradioEstablish(transceiver, teamID, reassign)
 	local AlliedStations = {}
 
@@ -310,9 +230,10 @@ function JMod.EZradioEstablish(transceiver, teamID, reassign)
 		end
 	end
 
-	local MinimumOutposts = JMod.Config.RadioSpecs.StartingOutpostCount or 0
+	local MaximumOutposts = JMod.Config.RadioSpecs.MaximumOutpostCount or 3
+	local MinimumOutposts = math.min(JMod.Config.RadioSpecs.StartingOutpostCount or 0, MaximumOutposts)
 	if (#AlliedStations < MinimumOutposts) then
-		for i = 1, MinimumOutposts - #AlliedStations do
+		for i = 1, math.min(MinimumOutposts - #AlliedStations, MaximumOutposts - #AlliedStations) do
 			table.insert(JMod.EZ_RADIO_STATIONS, CreateRadioStation(teamID))
 			table.insert(AlliedStations, #JMod.EZ_RADIO_STATIONS)
 		end
@@ -342,6 +263,17 @@ end
 
 -- this is on the global table for third-party use
 function JMod.AddNewRadioOutpost(teamID)
+	local MaximumOutposts = JMod.Config.RadioSpecs.MaximumOutpostCount or 3
+	local AlliedOutpostCount = 0
+
+	for _, station in pairs(JMod.EZ_RADIO_STATIONS) do
+		if station.teamID == teamID then
+			AlliedOutpostCount = AlliedOutpostCount + 1
+		end
+	end
+
+	if AlliedOutpostCount >= MaximumOutposts then return false end
+
 	table.insert(JMod.EZ_RADIO_STATIONS, CreateRadioStation(teamID))
 
 	local TeamName = team.GetName(tonumber(teamID))
@@ -355,7 +287,136 @@ function JMod.AddNewRadioOutpost(teamID)
 	for k, ply in player.Iterator() do
 		ply:PrintMessage(HUD_PRINTTALK, TeamName .. " has gained a radio outpost.")
 	end
+
+	return true
 end
+
+local ActiveSalePackage
+local DefaultSaleItems = {
+	{
+		name = "centrifuge",
+		category = "Machines",
+		result = "ent_jack_gmod_ezcentrifuge",
+		amount = 1,
+		DeliveryTimeMult = 2,
+		Weight = 1
+	},
+	{
+		name = "smelting furnace",
+		category = "Machines",
+		result = "ent_jack_gmod_ezfurnace",
+		amount = 1,
+		DeliveryTimeMult = 1.5,
+		Weight = 2
+	},
+	{
+		name = "oil refinery",
+		category = "Machines",
+		result = "ent_jack_gmod_ezrefinery",
+		amount = 1,
+		DeliveryTimeMult = 2.5,
+		Weight = 1
+	}
+}
+
+local function RefreshRadioSale()
+	local RadioSpecs = JMod.Config.RadioSpecs
+	if not istable(RadioSpecs.SaleItems) then
+		if RadioSpecs.SaleItems ~= nil then
+			ErrorNoHalt("JMod radio SaleItems config must be a table; using the default sale items.\n")
+		end
+		RadioSpecs.SaleItems = {}
+	end
+
+	if #RadioSpecs.SaleItems == 0 then
+		RadioSpecs.SaleItems = table.FullCopy(DefaultSaleItems)
+	end
+
+	local AvailablePackages = RadioSpecs.AvailablePackages
+
+	if ActiveSalePackage then
+		AvailablePackages[ActiveSalePackage] = nil
+		ActiveSalePackage = nil
+	end
+
+	local SaleItems = RadioSpecs.SaleItems
+	local ValidSaleItems = {}
+
+	for _, Sale in ipairs(SaleItems) do
+		if istable(Sale) and isstring(Sale.name) and isstring(Sale.category) and isstring(Sale.result)
+			and isnumber(Sale.amount) and Sale.amount >= 1 and Sale.amount == math.floor(Sale.amount)
+			and (Sale.Weight == nil or (isnumber(Sale.Weight) and Sale.Weight > 0))
+			and (Sale.DeliveryTimeMult == nil or (isnumber(Sale.DeliveryTimeMult) and Sale.DeliveryTimeMult > 0)) then
+			table.insert(ValidSaleItems, Sale)
+		else
+			ErrorNoHalt("JMod radio sale item is invalid; expected name, category, result, positive integer amount, positive weight, and positive delivery time multiplier.\n")
+		end
+	end
+
+	local SaleChance = RadioSpecs.SaleChance or 0.35
+	if not isnumber(SaleChance) or SaleChance < 0 or SaleChance > 1 then
+		ErrorNoHalt("JMod radio SaleChance must be between 0 and 1; using 0.35.\n")
+		SaleChance = 0.35
+	end
+	if #ValidSaleItems > 0 and math.Rand(0, 1) < SaleChance then
+		local TotalWeight = 0
+		for _, Sale in ipairs(ValidSaleItems) do
+			TotalWeight = TotalWeight + (Sale.Weight or 1)
+		end
+
+		local WeightRoll = math.Rand(0, TotalWeight)
+		local Sale
+		for _, Candidate in ipairs(ValidSaleItems) do
+			WeightRoll = WeightRoll - (Candidate.Weight or 1)
+			if WeightRoll <= 0 then
+				Sale = Candidate
+				break
+			end
+		end
+		Sale = Sale or ValidSaleItems[#ValidSaleItems]
+		local SaleName = string.lower(Sale.name)
+		local PackageName = "sale: " .. SaleName
+		local SaleDuration = RadioSpecs.SaleDuration or 300
+		if not isnumber(SaleDuration) or SaleDuration <= 0 then
+			ErrorNoHalt("JMod radio SaleDuration must be a positive number of seconds; using 300 seconds.\n")
+			SaleDuration = 300
+		end
+		AvailablePackages[PackageName] = {
+			description = "Limited-time deal: " .. Sale.amount .. " " .. Sale.name .. ".",
+			category = "Sales",
+			results = {{Sale.result, Sale.amount}},
+			saleItemName = SaleName,
+			DeliveryTimeMult = Sale.DeliveryTimeMult or 1,
+			saleExpiresAt = CurTime() + SaleDuration
+		}
+		ActiveSalePackage = PackageName
+
+		local Message = "!! " .. string.upper(Sale.name) .. " is on sale !!"
+		for _, Player in player.Iterator() do
+			Player:PrintMessage(HUD_PRINTTALK, Message)
+		end
+
+		timer.Simple(SaleDuration, function()
+			local CurrentSale = JMod.Config.RadioSpecs.AvailablePackages[PackageName]
+			if not CurrentSale or CurrentSale.saleExpiresAt > CurTime() then return end
+
+			JMod.Config.RadioSpecs.AvailablePackages[PackageName] = nil
+			if ActiveSalePackage == PackageName then
+				ActiveSalePackage = nil
+			end
+			JMod.CraftablesSync()
+		end)
+	end
+
+	JMod.CraftablesSync()
+end
+
+local SaleInterval = JMod.Config.RadioSpecs.SaleInterval or 900
+if not isnumber(SaleInterval) or SaleInterval <= 0 then
+	ErrorNoHalt("JMod radio SaleInterval must be a positive number of seconds; using 900 seconds.\n")
+	SaleInterval = 900
+end
+timer.Create("JMod_RadioSale", SaleInterval, 0, RefreshRadioSale)
 
 -- this is also on the global table for third-party use
 function JMod.RemoveRadioOutPost(teamID)
@@ -397,7 +458,10 @@ concommand.Add("jmod_debug_addoutpost", function(ply, cmd, args)
 		Team = ply:Team()
 	end
 
-	JMod.AddNewRadioOutpost(tostring(Team))
+	if not JMod.AddNewRadioOutpost(tostring(Team)) then
+		local MaximumOutposts = JMod.Config.RadioSpecs.MaximumOutpostCount or 3
+		ply:PrintMessage(HUD_PRINTTALK, "Your team has reached the maximum of " .. MaximumOutposts .. " radio outposts.")
+	end
 end, nil, "Adds another radio outpost for your team.")
 
 concommand.Add("jmod_debug_removeoutpost", function(ply, cmd, args)
@@ -553,13 +617,16 @@ local function TryFindSky(ent)
 	return false
 end
 
-local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime, quantity)
+local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime, quantity, deliveryTimeMult)
 	local Station = JMod.EZ_RADIO_STATIONS[id]
 	Station.lastCaller = transceiver
 	local Time = CurTime()
 	local DeliveryTime, Pos = deliveryTime or math.ceil(JMod.Config.RadioSpecs.DeliveryTimeMult * math.Rand(30, 60)), transceiver:GetPos()
 	if quantity then
 		DeliveryTime = math.ceil(DeliveryTime * (1 + 3 * (quantity - 1) / 224))
+	end
+	if isnumber(deliveryTimeMult) and deliveryTimeMult > 0 then
+		DeliveryTime = math.ceil(DeliveryTime * deliveryTimeMult)
 	end
 	local PlyPos = ply:GetPos()
 	-- Check to see if the player or the transceiver has a better drop position
@@ -582,6 +649,9 @@ local function StartDelivery(pkg, transceiver, id, bff, ply, deliveryTime, quant
 	Station.nextDeliveryTime = Time + DeliveryTime
 	Station.deliveryLocation = Pos
 	Station.deliveryType = pkg
+	local PackageInfo = JMod.Config.RadioSpecs.AvailablePackages[pkg]
+	Station.deliveryResults = PackageInfo and table.FullCopy(PackageInfo.results) or nil
+	Station.deliveryCategory = PackageInfo and PackageInfo.category or nil
 	Station.deliveryAmount = quantity
 	Station.notified = false
 	Station.nextNotifyTime = Time + (DeliveryTime - 5)
@@ -598,6 +668,14 @@ end
 function JMod.EZradioRequest(transceiver, id, ply, pkg, bff, quantity)
 	local PackageInfo, Station, Time = JMod.Config.RadioSpecs.AvailablePackages[pkg], JMod.EZ_RADIO_STATIONS[id], CurTime()
 	if not Station then return "No station with that ID" end
+	if PackageInfo and PackageInfo.saleItemName and PackageInfo.saleExpiresAt and PackageInfo.saleExpiresAt <= Time then
+		JMod.Config.RadioSpecs.AvailablePackages[pkg] = nil
+		if ActiveSalePackage == pkg then
+			ActiveSalePackage = nil
+		end
+		JMod.CraftablesSync()
+		return "That limited-time deal has expired."
+	end
 	if not PackageInfo then return "No package with that name" end
 	if quantity ~= nil and (PackageInfo.category ~= "Resources" or not isnumber(quantity) or quantity ~= math.floor(quantity) or quantity < 1 or quantity > 225) then
 		return "Resource orders must be between 1 and 225 units"
@@ -628,7 +706,8 @@ function JMod.EZradioRequest(transceiver, id, ply, pkg, bff, quantity)
 			end
 
 			if pkg == "antimatter" then
-				if math.random() >= .2 then
+				local SupplyChance = JMod.Config.RadioSpecs.AntimatterSupplyChance or 0.5
+				if math.Rand(0, 1) >= SupplyChance then
 					if bff then
 						return "nah fam, antimatter is out of stock and not available right now"
 					end
@@ -663,10 +742,68 @@ function JMod.EZradioRequest(transceiver, id, ply, pkg, bff, quantity)
 				end
 			end
 		else
-			return StartDelivery(pkg, transceiver, id, bff, ply, nil, quantity)
+			local Response = StartDelivery(pkg, transceiver, id, bff, ply, nil, quantity, PackageInfo.DeliveryTimeMult)
+
+			if PackageInfo.saleItemName then
+				JMod.Config.RadioSpecs.AvailablePackages[pkg] = nil
+				if ActiveSalePackage == pkg then
+					ActiveSalePackage = nil
+				end
+				JMod.CraftablesSync()
+			end
+
+			return Response
 		end
 	end
 end
+
+hook.Add("PlayerSay", "JMod_PLAYERSAY", function(ply, txt)
+	if not IsValid(ply) then return end
+	if not ply:Alive() then return end
+
+	if txt == "hi everyone" then
+		JMod.Hint(ply, "idiot")
+	end
+
+	local lowerTxt = string.lower(txt)
+
+	for _, v in pairs(ents.FindInSphere(ply:GetPos(), 150)) do
+		if v.EZreceiveSpeech and v:EZreceiveSpeech(ply, txt) then return "" end
+	end
+
+	if JMod.PlyHasArmorEff(ply, "teamComms") then
+		for _, data in pairs(ply.EZarmor.items) do
+			local Info = JMod.ArmorTable[data.name]
+			if not Info then continue end
+
+			if Info.eff and Info.eff.teamComms then
+				local SubtractAmt = JMod.Config.Armor.DegradationMult / 2
+				data.chrg.power = math.Clamp(data.chrg.power - SubtractAmt, 0, 9e9)
+
+				if data.chrg.power <= Info.chrg.power * .25 then
+					JMod.EZarmorWarning(ply, "armor's electrical charge is almost depleted!")
+				end
+			end
+		end
+
+		local BestRadio
+		for _, radio in ipairs(FindEZradios()) do
+			if radio:UserIsAuthorized(ply) and (not BestRadio or BestRadio:GetPos():DistToSqr(ply:GetPos()) > radio:GetPos():DistToSqr(ply:GetPos())) then
+				local RadioState = BestRadio and BestRadio:GetState() or 4
+				if radio.GetState and radio:GetState() <= RadioState then
+					BestRadio = radio
+				end
+			end
+		end
+
+		local ExplodedString = string.Explode(" ", lowerTxt)
+		if BestRadio and BestRadio:EZreceiveSpeech(ply, txt) then
+			return ""
+		elseif not BestRadio and ((ExplodedString[1] == "supply") or (ExplodedString[1] == "aid")) and (ExplodedString[2] == "radio:") then
+			ply:PrintMessage(HUD_PRINTCENTER, "No good radios in range")
+		end
+	end
+end)
 
 function JMod.EZradioStatus(transceiver, id, ply, bff)
 	local Station, Time, Msg = JMod.EZ_RADIO_STATIONS[id], CurTime(), ""

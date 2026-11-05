@@ -353,7 +353,14 @@ local ITEM_PIPE_TRANSFER_RATE = 100
 
 function JMod.DistributeItemPipeResources(source, consumer, resourceType)
 	if not(IsValid(source) and source.IsJackyEZcrate and source.GetResourceType and source.GetEZsupplies and source.SetEZsupplies) then return end
-	if not(IsValid(consumer) and not consumer.IsJackyEZcrate and consumer.EZconsumes and table.HasValue(consumer.EZconsumes, resourceType) and consumer.TryLoadResource) then return end
+	if not IsValid(consumer) or not consumer.TryLoadResource then return end
+	if consumer.IsJackyEZcrate then
+		if not consumer.GetResourceType then return end
+		local DestinationType = consumer:GetResourceType()
+		if DestinationType ~= "generic" and DestinationType ~= resourceType then return end
+	elseif not(consumer.EZconsumes and table.HasValue(consumer.EZconsumes, resourceType)) then
+		return
+	end
 
 	if not resourceType or source:GetResourceType() ~= resourceType then return end
 

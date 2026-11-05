@@ -142,7 +142,56 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 		RadioSpecs = {
 			DeliveryTimeMult = 1,
 			ParachuteDragMult = 1,
-			StartingOutpostCount = 1,
+			StartingOutpostCount = 3,
+			MaximumOutpostCount = 3, -- how many outposts, this makes it easier to order shit when its out of stock
+			AntimatterSupplyChance = 0.5, -- yeah
+			SaleChance = 0.35, -- idk
+			SaleInterval = 900, -- in seconds
+			SaleDuration = 300, -- in seconds
+			-- to determine item chance for it possibly being chosen, heres the equation for it
+			-- C% = item weight / total weight of all items * 100
+			-- so like if the total weight was 6 and an item had a weight of three itd be 50%, though thats easy to infer
+			-- anomalous resource is 0.15 percent chance to get, if you somehow pull it you're goated
+			SaleItems = {
+				{
+					name = "salvage saw",
+					category = "Machines",
+					result = "ent_jack_gmod_ezsalvager",
+					amount = 1,
+					DeliveryTimeMult = 2,
+					Weight = 3
+				},
+				{
+					name = "winch",
+					category = "Machines",
+					result = "ent_jack_gmod_ezwinch",
+					amount = 1,
+					DeliveryTimeMult = 1.5,
+					Weight = 2
+				},
+				{
+					name = "uranium centrifuge",
+					category = "Machines",
+					result = "ent_jack_gmod_ezcentrifuge",
+					amount = 1,
+					DeliveryTimeMult = 4,
+					Weight = .6
+				},{
+					name = "radioisotope thermoelectric generator",
+					category = "Machines",
+					result = "ent_jack_gmod_ezrtg",
+					amount = 1,
+					DeliveryTimeMult = 2.5,
+					Weight = 1
+				},{
+					name = "anomalous resource",
+					category = "Machines",
+					result = "ent_jack_gmod_ezanomaly_resource",
+					amount = 100,
+					DeliveryTimeMult = 25,
+					Weight = 0.01
+				},
+			},
 			AvailablePackages = {
 				-- How to use results in radio orders
 				-- String names class
@@ -640,7 +689,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 					description = "10 units of Diamond, used in advanced parts.",
 					category = "Resources",
 					results = {
-						{"ent_jack_gmod_ezdiamond", 1, 10}
+						{"ent_jack_gmod_ezdiamond", 1, 20}
 					}
 				},
 				["water"] = {

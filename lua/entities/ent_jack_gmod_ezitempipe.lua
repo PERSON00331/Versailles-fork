@@ -215,10 +215,14 @@ if SERVER then
 		local Compatible
 
 		if SourceIsCrate then
-			Compatible = not DestinationIsCrate
-				and hitEntity.EZconsumes
-				and table.HasValue(hitEntity.EZconsumes, ResourceType)
-				and hitEntity.TryLoadResource
+			Compatible = hitEntity.TryLoadResource and (
+				(DestinationIsCrate
+					and hitEntity.GetResourceType
+					and (hitEntity:GetResourceType() == "generic" or hitEntity:GetResourceType() == ResourceType))
+				or (not DestinationIsCrate
+					and hitEntity.EZconsumes
+					and table.HasValue(hitEntity.EZconsumes, ResourceType))
+			)
 		else
 			Compatible = DestinationIsCrate
 				and hitEntity.GetResourceType

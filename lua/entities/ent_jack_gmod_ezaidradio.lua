@@ -383,6 +383,20 @@ if(SERVER)then
 				WireLib.TriggerOutput(self, "RecievedSpeech", Message)
 			end
 
+			local OrderPackageName = Message
+			local AvailablePackages = JMod.Config and JMod.Config.RadioSpecs and JMod.Config.RadioSpecs.AvailablePackages
+			if AvailablePackages and not AvailablePackages[OrderPackageName] then
+				local SaleItemName = string.match(Message, "^sale:%s*(.+)$") or Message
+				SaleItemName = string.gsub(SaleItemName, "%s+%(%d+%)$", "")
+
+				for PackageName, PackageInfo in pairs(AvailablePackages) do
+					if PackageInfo.saleItemName == SaleItemName then
+						OrderPackageName = PackageName
+						break
+					end
+				end
+			end
+
 			if Message == "help" then
 				if State == 2 then
 					--local Msg,Num='stand near radio\nsay in chat: "status", or "supply radio: [package]"\navailable packages are:\n',1
@@ -428,8 +442,11 @@ if(SERVER)then
 				self:Connect(ply, true)
 
 				SuccessfulTransmit = true
-			elseif JMod.Config and JMod.Config.RadioSpecs.AvailablePackages[Message] then
-				self:Speak(JMod.EZradioRequest(self, self:GetOutpostID(), ply, Message, BFFreq), ParrotPhrase, ply)
+			elseif AvailablePackages and AvailablePackages[OrderPackageName] then
+				local Response = isfunction(JMod.EZradioRequest)
+					and JMod.EZradioRequest(self, self:GetOutpostID(), ply, OrderPackageName, BFFreq)
+					or "Supply service is temporarily unavailable."
+				self:Speak(Response, ParrotPhrase, ply)
 
 				SuccessfulTransmit = true
 			elseif JMod.Config and JMod.Config.RadioSpecs.AvailablePackages then
@@ -437,7 +454,10 @@ if(SERVER)then
 				local PackageInfo = PackageName and JMod.Config.RadioSpecs.AvailablePackages[PackageName]
 
 				if PackageInfo and PackageInfo.category == "Resources" then
-					self:Speak(JMod.EZradioRequest(self, self:GetOutpostID(), ply, PackageName, BFFreq, tonumber(AmountText)), ParrotPhrase, ply)
+					local Response = isfunction(JMod.EZradioRequest)
+						and JMod.EZradioRequest(self, self:GetOutpostID(), ply, PackageName, BFFreq, tonumber(AmountText))
+						or "Supply service is temporarily unavailable."
+					self:Speak(Response, ParrotPhrase, ply)
 					SuccessfulTransmit = true
 				else
 					local Override, Words = hook.Run("JMod_CustomRadioRequest", ply, self, Message)

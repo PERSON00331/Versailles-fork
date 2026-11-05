@@ -12,7 +12,11 @@ ENT.AdminSpawnable = true
 ENT.JModPreferredCarryAngles = Angle(0, 0, 0)
 ENT.Model = "models/jmod/ezwinch01.mdl"
 ENT.Mass = 30
-ENT.EZupgradable = false
+ENT.EZupgradable = true
+ENT.BackupRecipe = {
+	[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 25,
+	[JMod.EZ_RESOURCE_TYPES.STEEL] = 50
+}
 --
 ENT.StaticPerfSpecs={ 
 	MaxElectricity = 100,
@@ -21,8 +25,27 @@ ENT.StaticPerfSpecs={
 }
 
 local STATE_BROKEN, STATE_OFF, STATE_WINDING, STATE_SPEELING = -1, 0, 1, 2
+local BaseClass = baseclass.Get(ENT.Base)
 --
 if SERVER then
+	function ENT:GetUpgradeMultiplier()
+		return 1 + math.max(self:GetGrade() - 1, 0) * .35
+	end
+
+	function ENT:UpdateUpgradeStats()
+		local UpgradeMultiplier = self:GetUpgradeMultiplier()
+		self.MaxConnectionRange = 1000 * UpgradeMultiplier
+
+		if IsValid(self.Chain) then
+			self.Chain:Fire("SetSpringConstant", tostring(10 * UpgradeMultiplier), 0)
+		end
+	end
+
+	function ENT:Upgrade(level)
+		BaseClass.Upgrade(self, level)
+		self:UpdateUpgradeStats()
+	end
+
 	function ENT:SetupWire()
 		if not(istable(WireLib)) then return end
 		local WireInputs = {"Speel [NORMAL]", "Ratchet [NORMAL]", "TurnOff [NORMAL]", "Disconnect [NORMAL]"}
@@ -86,14 +109,17 @@ if SERVER then
 	function ENT:CustomInit()
 		self.NextUseTime = 0
 		self.EZcolorable = false
-		self.MaxConnectionRange = 1000
+		self:UpdateUpgradeStats()
 		self.CurrentCableLength = 0
 		self.SoundLoop = CreateSound(self, "snds_jack_gmod/slow_ratchet.wav")
 	end
 
 	function ENT:Ratchet(amt)
 		if not(IsValid(self.Chain)) or (self:GetState() < STATE_OFF) then return end
+		local UpgradeMultiplier = self:GetUpgradeMultiplier()
+		self.MaxConnectionRange = 1000 * UpgradeMultiplier
 		amt = amt or 5
+		amt = amt * UpgradeMultiplier
 		if amt < 0 then
 			sound.Play("snds_jack_gmod/ezsentry_turn.ogg", self:GetPos(), 60, math.random(90, 95))
 			if (self:GetElectricity() <= 0) then self:TurnOff() end
@@ -152,7 +178,9 @@ if SERVER then
 		self.Hooker = Hooky
 
 		self.CurrentCableLength = 20
-		self.Chain, self.VisualRope = constraint.Elastic(Hooky, self, 0, 0, Vector(0,0,9), Vector(-7.5,10,3), 5000, 10, 2, "cable/mat_jack_gmod_chain", 2, true)
+		local UpgradeMultiplier = self:GetUpgradeMultiplier()
+		self.MaxConnectionRange = 1000 * UpgradeMultiplier
+		self.Chain, self.VisualRope = constraint.Elastic(Hooky, self, 0, 0, Vector(0,0,9), Vector(-7.5,10,3), 5000, 10 * UpgradeMultiplier, 2, "cable/mat_jack_gmod_chain", 2, true)
 		self.VisualRope:SetKeyValue( "Collide", "false")
 		Hooky.Chain = self.Chain
 

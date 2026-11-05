@@ -126,6 +126,7 @@
 	["hint ent_jack_gmod_eztoolbox"] = "Toolbox can craft, nail, package, upgrade and salvage things",
 	["hint ent_jack_gmod_ezmedkit"] = "Medkit can be used to heal oneself or other players",
 	["hint ent_jack_gmod_ezsolargenerator"] = "Produces power relative to how much sunight it gets",
+	["hint ent_jack_gmod_ezwinch"] = "Upgrade with a Toolbox to increase cable range, winding speed, and pull strength",
 	["hint solar panel no sun"] = "Solar panels do not work at night, or in low light conditions",
 	["hint ent_jack_gmod_ezrtg"] = "Produces power slowly overtime, works anywhere",
 	["hint sentry friends"] = "Set your friends with command jmod_friends; your sentries won't shoot at them",
