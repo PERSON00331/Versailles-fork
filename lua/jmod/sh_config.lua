@@ -77,11 +77,11 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				Power = 1
 			},
 			Detpack = {
-				PowerMult = 1
+				PowerMult = 2
 			},
 			Nuke = {
-				RangeMult = 1,
-				PowerMult = 1,
+				RangeMult = 2,
+				PowerMult = 2.4,
 				RadiationSickness = true
 			},
 			Flashbang = {
@@ -92,7 +92,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			DoorBreachResetTimeMult = 1,
 			FragExplosions = true,
 			PropDestroyPower = 1,
-			BombOwnershipLossOnRespawn = true
+			BombOwnershipLossOnRespawn = false
 		},
 		Particles = {
 			VirusSpreadMult = 1,
@@ -118,7 +118,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 		},
 		QoL = {
 			RealisticLocationalDamage = false,
-			ExtinguishUnderwater = false,
+			ExtinguishUnderwater = true,
 			RealisticFallDamage = false,
 			Drowning = false,
 			GiveHandsOnSpawn = false,
@@ -126,7 +126,7 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			JModInvDropOnDeath = false,
 			BleedDmgMult = 0,
 			BleedSpeedMult = 0,
-			NukeFlashLightEnabled = false,
+			NukeFlashLightEnabled = true,
 			NiceFire = true,
 			ChangePitchWithHostTimeScale = true,
 			AllowActiveItemsInInventory = true,
