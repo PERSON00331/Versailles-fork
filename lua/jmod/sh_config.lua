@@ -157,9 +157,9 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 			StartingOutpostCount = 3,
 			MaximumOutpostCount = 3, -- how many outposts, this makes it easier to order shit when its out of stock
 			AntimatterSupplyChance = 0.5, -- yeah
-			SaleChance = 1, -- idk
-			SaleInterval = 15, -- in seconds
-			SaleDuration = 15, -- in seconds
+			SaleChance = .45, -- idk
+			SaleInterval = 600, -- in seconds
+			SaleDuration = 250, -- in seconds
 			-- to determine item chance for it possibly being chosen, heres the equation for it
 			-- C% = item weight / total weight of all items * 100
 			-- so like if the total weight was 6 and an item had a weight of three itd be 50%, though thats easy to infer
