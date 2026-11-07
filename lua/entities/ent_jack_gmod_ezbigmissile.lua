@@ -1,6 +1,6 @@
 ﻿-- Jackarunda 2021
 AddCSLuaFile()
-ENT.Base = "ent_jack_gmod_ezherockett"
+ENT.Base = "ent_jack_gmod_ezherocket"
 ENT.Type = "anim"
 ENT.Author = "Jackarunda"
 ENT.Category = "JMod - EZ Explosives"
