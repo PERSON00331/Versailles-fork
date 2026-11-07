@@ -949,6 +949,19 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				craftingType = "toolbox",
 				description = "Allows you to move objects up and down with ease."
 			},
+			["EZ Salvage Saw"] = {
+				results = "ent_jack_gmod_ezsalvager",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 150,
+					[JMod.EZ_RESOURCE_TYPES.STEEL] = 69,
+					[JMod.EZ_RESOURCE_TYPES.TUNGSTEN] = 35,
+					[JMod.EZ_RESOURCE_TYPES.PRECISIONPARTS] = 100
+				},
+				sizeScale = 1.5,
+				category = "Machines",
+				craftingType = "toolbox",
+				description = "Cuts salvageable objects into resources."
+			},
 			["EZ Solar Panel"] = {
 				results = "ent_jack_gmod_ezsolargenerator",
 				craftingReqs = {
