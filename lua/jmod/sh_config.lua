@@ -1330,6 +1330,34 @@ function JMod.InitGlobalConfig(forceNew, configToApply)
 				craftingType = "toolbox",
 				description = "Fire bomb. Detonates in the air to ensure max spread of napalm."
 			},
+			["Huge Incendiary Bomb"] = {
+				results = "ent_jack_gmod_ezbigincendiarybomb",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 150,
+					[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 30,
+					[JMod.EZ_RESOURCE_TYPES.FUEL] = 600,
+					[JMod.EZ_RESOURCE_TYPES.CHEMICALS] = 60
+				},
+				sizeScale = 3.5,
+				category = "Explosives",
+				craftingType = "toolbox",
+				description = "A huge incendiary bomb requiring three times the materials of a standard incendiary bomb."
+			},
+			["Solar Flare"] = {
+				results = "ent_jack_gmod_ezsolarflare",
+				craftingReqs = {
+					[JMod.EZ_RESOURCE_TYPES.BASICPARTS] = 500,
+					[JMod.EZ_RESOURCE_TYPES.EXPLOSIVES] = 100,
+					[JMod.EZ_RESOURCE_TYPES.FUEL] = 2000,
+					[JMod.EZ_RESOURCE_TYPES.CHEMICALS] = 200,
+					[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = 225,
+					[JMod.EZ_RESOURCE_TYPES.GAS] = 1500
+				},
+				sizeScale = 8.5,
+				category = "Explosives",
+				craftingType = "toolbox",
+				description = "An enormous incendiary bomb requiring ten times the materials of a standard incendiary bomb, plus advanced parts and gas."
+			},
 			["EZ Mega Bomb"] = {
 				results = "ent_jack_gmod_ezmoab",
 				craftingReqs = {

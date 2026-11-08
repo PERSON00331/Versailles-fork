@@ -61,6 +61,9 @@ if SERVER then
 
 	function ENT:Initialize()
 		self:SetModel(self.Model)
+		if self.ModelScale then
+			self:SetModelScale(self.ModelScale, 0)
+		end
 		self:PhysicsInit(SOLID_VPHYSICS)
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetSolid(SOLID_VPHYSICS)
