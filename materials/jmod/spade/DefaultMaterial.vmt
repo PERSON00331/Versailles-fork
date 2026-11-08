@@ -1,0 +1,11 @@
+"VertexLitGeneric"
+{
+    "$basetexture" "jmod/spade/DefaultMaterial_albedo"
+
+    "$bumpmap" "jmod/spade/DefaultMaterial_normal"
+
+    "$phong" "0"
+    "$envmap" "0"
+
+    "$selfillum" "0"
+}

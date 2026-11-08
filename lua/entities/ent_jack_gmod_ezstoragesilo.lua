@@ -221,6 +221,7 @@ if SERVER then
 
 	local RestrictedMaterials = {
 		JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL,
+		JMod.EZ_RESOURCE_TYPES.FUSIONMATERIAL,
 		JMod.EZ_RESOURCE_TYPES.ANTIMATTER
 	}
 	function ENT:PostEntityPaste(ply)

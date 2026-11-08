@@ -63,6 +63,7 @@ JMod.EZ_RESOURCE_TYPES = {
 	ADVANCEDTEXTILES = "advanced textiles",
 	ADVANCEDPARTS = "advanced parts",
 	FISSILEMATERIAL = "fissile material",
+	FUSIONMATERIAL = "fusion material",
 	--
 	ANTIMATTER = "antimatter"
 }
@@ -89,6 +90,9 @@ for k, v in pairs(JMod.EZ_RESOURCE_TYPES) do
 	JMod.EZ_RESOURCE_TYPE_ICONS[v] = Material("ez_resource_icons/" .. v .. ".png")
 	JMod.EZ_RESOURCE_TYPE_ICONS_SMOL[v] = Material("ez_resource_icons/" .. v .. " smol.png")
 end
+
+JMod.EZ_RESOURCE_TYPE_ICONS[JMod.EZ_RESOURCE_TYPES.FUSIONMATERIAL] = JMod.EZ_RESOURCE_TYPE_ICONS[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL]
+JMod.EZ_RESOURCE_TYPE_ICONS_SMOL[JMod.EZ_RESOURCE_TYPES.FUSIONMATERIAL] = JMod.EZ_RESOURCE_TYPE_ICONS_SMOL[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL]
 
 JMod.EZ_RESOURCE_ENTITIES = {
 	[JMod.EZ_RESOURCE_TYPES.WATER] = "ent_jack_gmod_ezwater",
@@ -139,6 +143,7 @@ JMod.EZ_RESOURCE_ENTITIES = {
 	[JMod.EZ_RESOURCE_TYPES.ADVANCEDTEXTILES] = "ent_jack_gmod_ezadvtextiles",
 	[JMod.EZ_RESOURCE_TYPES.ADVANCEDPARTS] = "ent_jack_gmod_ezadvparts",
 	[JMod.EZ_RESOURCE_TYPES.FISSILEMATERIAL] = "ent_jack_gmod_ezfissilematerial",
+	[JMod.EZ_RESOURCE_TYPES.FUSIONMATERIAL] = "ent_jack_gmod_ezfusionmaterial",
 	[JMod.EZ_RESOURCE_TYPES.ANTIMATTER] = "ent_jack_gmod_ezantimatter",
 	[JMod.EZ_RESOURCE_TYPES.SAND] = "ent_jack_gmod_ezsand",
 	[JMod.EZ_RESOURCE_TYPES.CONCRETE] = "ent_jack_gmod_ezconcrete"

@@ -255,6 +255,12 @@ local PropConfig = {
 		col = Color(40, 45, 40),
 		scl = .4
 	},
+	[JMod.EZ_RESOURCE_TYPES.FUSIONMATERIAL] = {
+		mdls = RockModels,
+		mat = "models/props_mining/ingot_jack_uranium",
+		col = Color(40, 45, 40),
+		scl = .4
+	},
 	[JMod.EZ_RESOURCE_TYPES.PLATINUM] = {
 		mdls = RockModels,
 		mat = "models/props_mining/ingot_jack_platinum",
