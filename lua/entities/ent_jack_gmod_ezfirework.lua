@@ -115,7 +115,8 @@ if SERVER then
 		if self.Exploded then return end
 		self.Exploded = true
 		local SelfPos, Att, Dir = self:GetPos() + Vector(0, 0, 30), JMod.GetEZowner(self), -self:GetUp()
-		JMod.Sploom(Att, SelfPos, 100)
+		local ExplosionScale = self.ExplosionScale or 1
+		JMod.Sploom(Att, SelfPos, 100 * ExplosionScale)
 		local BurnDmg = DamageInfo()
 		BurnDmg:SetDamageType(DMG_BURN)
 		BurnDmg:SetDamage(10)
@@ -123,8 +124,8 @@ if SERVER then
 		BurnDmg:SetInflictor(self)
 		BurnDmg:SetDamagePosition(SelfPos)
 		BurnDmg:SetDamageForce(Dir * 1)
-		util.BlastDamageInfo(BurnDmg, SelfPos, 200)
-		local InitialVel = VectorRand() * 100
+		util.BlastDamageInfo(BurnDmg, SelfPos, 200 * ExplosionScale)
+		local InitialVel = VectorRand() * 100 * ExplosionScale
 		timer.Simple(0, function()
 			local Flame = ents.Create("ent_jack_gmod_eznapalm")
 			Flame:SetPos(SelfPos)
@@ -136,7 +137,7 @@ if SERVER then
 			Flame:Activate()
 		end)
 		---
-		util.ScreenShake(SelfPos, 1000, 3, 1, 1500)
+		util.ScreenShake(SelfPos, 1000, 3, 1, 1500 * ExplosionScale)
 		local pitch = math.random(95, 105)
 		self:EmitSound("snds_jack_gmod/firework_pop_crackle.ogg", 100, pitch)
 		for k, v in player.Iterator() do
@@ -147,7 +148,7 @@ if SERVER then
 		end
 		---
 		timer.Simple(.2, function()
-			local Tr = util.QuickTrace(SelfPos - Dir * 100, Dir * 300)
+			local Tr = util.QuickTrace(SelfPos - Dir * 100 * ExplosionScale, Dir * 300 * ExplosionScale)
 			if Tr.Hit then
 				util.Decal("Scorch", Tr.HitPos + Tr.HitNormal, Tr.HitPos - Tr.HitNormal)
 			end
@@ -156,7 +157,8 @@ if SERVER then
 		self:Remove()
 		timer.Simple(0, function()
 			local EffData = EffectData()
-			EffData:SetOrigin(SelfPos - Dir * 100)
+			EffData:SetOrigin(SelfPos - Dir * 100 * ExplosionScale)
+			EffData:SetScale(ExplosionScale)
 			util.Effect("eff_jack_gmod_firework", EffData, true, true)
 		end)
 	end

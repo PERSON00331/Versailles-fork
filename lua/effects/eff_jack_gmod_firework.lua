@@ -1,7 +1,9 @@
 ﻿local Flash = Material("sprites/mat_jack_basicglow")
 function EFFECT:Init(data)
-	local Pos, Scl = data:GetOrigin(), data:GetScale(), 1
+	local Pos, Scale = data:GetOrigin(), data:GetScale()
+	if Scale <= 0 then Scale = 1 end
 	self.Pos = Pos
+	self.Scale = Scale
 	local Time = CurTime()
 	self.FlashTime = Time + .05
 	self.CrackleTime = Time + .75
@@ -29,13 +31,13 @@ function EFFECT:Init(data)
 			local Girth = 1 - (j / 30)
 			local particle = Emitter:Add("sprites/mat_jack_basicglow", Pos)
 			if (particle) then -- glowing lights
-				particle:SetVelocity(Dir * 2000 * Girth ^ .5)
-				particle:SetAirResistance(100)
-				particle:SetGravity(Vector(0, 0, -400 * Girth ^ 2))
+				particle:SetVelocity(Dir * 2000 * Scale * Girth ^ .5)
+				particle:SetAirResistance(100 / Scale)
+				particle:SetGravity(Vector(0, 0, -400 * Scale * Girth ^ 2))
 				particle:SetDieTime(math.Rand(4, 6) * Girth)
 				particle:SetStartAlpha(255)
 				particle:SetEndAlpha(0)
-				particle:SetStartSize(50 * Girth)
+				particle:SetStartSize(50 * Scale * Girth)
 				particle:SetEndSize(0)
 				particle:SetRoll(math.Rand(-3, 3))
 				particle:SetRollDelta(math.Rand(-3, 3))
@@ -53,14 +55,14 @@ function EFFECT:Init(data)
 						local sprite = table.Random({"particle/smokestack", "particles/smokey", "particle/particle_smokegrenade", "sprites/Smoke1", "sprites/Smoke2", "sprites/Smoke3"})
 						local particle2 = Emitter:Add(sprite, Pos) -- trailing colored smoke
 						if (particle2) then
-							particle2:SetVelocity(Dir * 1000 * Girth ^ .5)
-							particle2:SetAirResistance(50)
-							particle2:SetGravity(Vector(0, 0, -100 * Girth ^ 2) + JMod.Wind * 200)
+							particle2:SetVelocity(Dir * 1000 * Scale * Girth ^ .5)
+							particle2:SetAirResistance(50 / Scale)
+							particle2:SetGravity(Vector(0, 0, -100 * Scale * Girth ^ 2) + JMod.Wind * 200)
 							particle2:SetDieTime(math.Rand(4, 12))
 							particle2:SetStartAlpha(50)
 							particle2:SetEndAlpha(0)
 							particle2:SetStartSize(0)
-							particle2:SetEndSize(200 * Girth)
+							particle2:SetEndSize(200 * Scale * Girth)
 							particle2:SetRoll(math.Rand(-3, 3))
 							particle2:SetRollDelta(math.Rand(-3, 3))
 							particle2:SetColor(RealR, RealG, RealB)
@@ -70,14 +72,14 @@ function EFFECT:Init(data)
 							local sprite2 = table.Random({"particle/smokestack", "particles/smokey", "particle/particle_smokegrenade", "sprites/Smoke1", "sprites/Smoke2", "sprites/Smoke3"})
 							local particle3 = Emitter:Add(sprite2, Pos) -- airburst smoke
 							if (particle3) then
-								particle3:SetVelocity(Dir * 1000 * Girth)
-								particle3:SetAirResistance(150)
-								particle3:SetGravity(Vector(0, 0, -100 * Girth ^ 2) + JMod.Wind * 200)
+								particle3:SetVelocity(Dir * 1000 * Scale * Girth)
+								particle3:SetAirResistance(150 / Scale)
+								particle3:SetGravity(Vector(0, 0, -100 * Scale * Girth ^ 2) + JMod.Wind * 200)
 								particle3:SetDieTime(math.Rand(2, 6))
 								particle3:SetStartAlpha(50)
 								particle3:SetEndAlpha(0)
-								particle3:SetStartSize(30 * (1 - Girth))
-								particle3:SetEndSize(60 * (1 - Girth))
+								particle3:SetStartSize(30 * Scale * (1 - Girth))
+								particle3:SetEndSize(60 * Scale * (1 - Girth))
 								particle3:SetRoll(math.Rand(-3, 3))
 								particle3:SetRollDelta(math.Rand(-3, 3))
 								particle3:SetColor(RealR, RealG, RealB)
@@ -100,11 +102,11 @@ function EFFECT:Render()
 		render.SetMaterial(Flash)
 		if (self.FlashTime > Time) then
 			local Dir = (self.Pos - EyePos()):GetNormalized()
-			render.DrawSprite(self.Pos - Dir * 100, 1000, 1000, Color(255, 200, 150, 255))
+			render.DrawSprite(self.Pos - Dir * 100, 1000 * self.Scale, 1000 * self.Scale, Color(255, 200, 150, 255))
 		end
 		if (self.CrackleTime < Time) then
-			render.DrawSprite(self.Pos + VectorRand() * math.random(1, 750), 100, 100, Color(255, 200, 75, 255))
-			render.DrawSprite(self.Pos + VectorRand() * math.random(1, 750), 50, 50, Color(255, 255, 255, 255))
+			render.DrawSprite(self.Pos + VectorRand() * math.random(1, 750) * self.Scale, 100 * self.Scale, 100 * self.Scale, Color(255, 200, 75, 255))
+			render.DrawSprite(self.Pos + VectorRand() * math.random(1, 750) * self.Scale, 50 * self.Scale, 50 * self.Scale, Color(255, 255, 255, 255))
 		end
 		return true
 	end
