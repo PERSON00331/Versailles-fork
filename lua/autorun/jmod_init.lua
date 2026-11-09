@@ -1,6 +1,6 @@
 AddCSLuaFile()
 JMod = JMod or {}
--- EZ radio stations
+-- EZ radio stationss
 JMod.EZ_RADIO_STATIONS = {}
 JMod.EZ_STATION_STATE_READY = 2
 JMod.EZ_STATION_STATE_DELIVERING = 3
