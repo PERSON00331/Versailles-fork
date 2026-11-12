@@ -504,6 +504,7 @@ function JMod.RemoveArmorByID(ply, ID, broken)
 		-- if this is a suit, we need to reset the player's model when he takes it off
 		if ply.EZoriginalPlayerModel then
 			JMod.SetPlayerModel(ply, ply.EZoriginalPlayerModel)
+			ply.EZoriginalPlayerModel = nil
 		end
 
 		ply:SetColor(Color(255, 255, 255))
@@ -581,8 +582,8 @@ local function GetAreSlotsClear(currentArmorItems, newArmorName)
 end
 
 function JMod.SetPlayerModel(ply, mod)
-	ply:SetModel(mod)
 	local simplemodel = player_manager.TranslateToPlayerModelName(mod)
+	player_manager.SetPlayerModel(ply, simplemodel)
 	local info = player_manager.TranslatePlayerHands(simplemodel)
 	local Hans = ply:GetHands()
 
