@@ -6,7 +6,7 @@ Ha-HA, the fun has been DOUBLED!
 
 If you think you can help, let Jackarunda know in the gmod Discord.
 https://discord.gg/NubWvfwh96
-
+a
 # Setup for Contribution
 
 You must have a github account, first. You can make one for free.
