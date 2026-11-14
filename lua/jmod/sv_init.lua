@@ -3,6 +3,7 @@ local force_workshop = CreateConVar("jmod_forceworkshop", 1, {FCVAR_ARCHIVE}, "F
 
 if force_workshop:GetBool() then
 	resource.AddWorkshop("1919689921")
+	resource.AddWorkshop("243665786") -- Hazmat suit playermodel
 end
 
 local function JackaSpawnHook(ply, transition)

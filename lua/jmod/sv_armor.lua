@@ -583,7 +583,7 @@ end
 
 function JMod.SetPlayerModel(ply, mod)
 	local simplemodel = player_manager.TranslateToPlayerModelName(mod)
-	player_manager.SetPlayerModel(ply, simplemodel)
+	ply:SetModel(mod)
 	local info = player_manager.TranslatePlayerHands(simplemodel)
 	local Hans = ply:GetHands()
 

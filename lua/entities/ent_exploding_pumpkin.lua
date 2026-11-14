@@ -11,19 +11,22 @@ ENT.Category = "JMod - EZ Misc."
 if CLIENT then
     language.Add("ent_exploding_pumpkin", "Exploding Pumpkin")
 
-    killicon.Add("ent_exploding_pumpkin","jmod/spade/pumpkin",Color(255, 128, 0, 255)
-)
+    killicon.Add("ent_exploding_pumpkin","jmod/spade/pumpkin",Color(255, 128, 0, 255))
+
+    net.Receive("ExplodingPumpkinThrowSound", function()
+        surface.PlaySound("pumpkin_throw.wav")
+    end)
 end
 
 if SERVER then
+    util.AddNetworkString("ExplodingPumpkinThrowSound")
+
     local GibModels = {
         "models/props_outland/pumpkin01_chunk01b.mdl",
         "models/props_outland/pumpkin01_chunk01a.mdl",
         "models/props_outland/pumpkin01_chunk02a.mdl"
     }
--- instead of just using a smaller pumpkin with gibs, we use a larger one without it
--- since itd kinda be bad to have a small pumpkin that explodes..
--- big pumpkin = 10000x aura npc energy points
+
     function ENT:Initialize()
         self:SetModel("models/props_outland/pumpkin01_explosive.mdl")
         self:PhysicsInit(SOLID_VPHYSICS)
@@ -71,10 +74,10 @@ if SERVER then
 
         if self.WasHeld and not Held then
             local Phys = self:GetPhysicsObject()
+            local Owner = self:GetOwner()
 
             if IsValid(Phys) then
                 local AimDir
-                local Owner = self:GetOwner()
 
                 if IsValid(Owner) and Owner:IsPlayer() then
                     AimDir = Owner:EyeAngles():Forward()
@@ -85,10 +88,11 @@ if SERVER then
                 if AimDir:LengthSqr() > 0 then
                     Phys:ApplyForceCenter(AimDir * 900000)
 
-                    local Owner = self:GetOwner()
-
                     if IsValid(Owner) and Owner:IsPlayer() then
                         Owner:SetVelocity(-AimDir * 769)
+
+                        net.Start("ExplodingPumpkinThrowSound")
+                        net.Send(Owner)
                     end
                 end
             end
@@ -178,7 +182,7 @@ if SERVER then
                 Phys:AddAngleVelocity(VectorRand() * 500)
             end
 
-            SafeRemoveEntityDelayed(Gib, 10)
+            SafeRemoveEntityDelayed(Gib, 8)
         end
 
         SafeRemoveEntity(self)
