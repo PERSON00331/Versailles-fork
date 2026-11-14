@@ -15,7 +15,7 @@ ENT.JModDontIrradiate = false
 ENT.EZcolorable = false
 ----
 ENT.EZconsumes={
-	JMod.EZ_RESOURCE_TYPES.WATER
+	JMod.EZ_RESOURCE_TYPES.WATER, JMod.EZ_RESOURCE_TYPES.DIRTYWATER
 }
 ENT.NextRefillTime = 0
 --[[ENT.StaticPerfSpecs={
@@ -290,7 +290,7 @@ if(SERVER)then
 		for _,v in pairs(self.EZconsumes)do
 			if(typ == v)then
 				local Accepted = 0
-				if(typ == JMod.EZ_RESOURCE_TYPES.WATER)or(typ == JMod.EZ_RESOURCE_TYPES.CHEMICALS)or(typ == JMod.EZ_RESOURCE_TYPES.PROPELLANT)then
+				if(typ == JMod.EZ_RESOURCE_TYPES.WATER)or(typ == JMod.EZ_RESOURCE_TYPES.DIRTYWATER)or(typ == JMod.EZ_RESOURCE_TYPES.CHEMICALS)or(typ == JMod.EZ_RESOURCE_TYPES.PROPELLANT)then
 					local Aqua = self:GetWater()
 					local Missing = self.MaxWater - Aqua
 					if(Missing < 1)then return 0 end
@@ -320,7 +320,21 @@ if(SERVER)then
 					self.Hydration = Wata + Accepted
 					self.LastWateredTime = Time
 					self:EmitSound("snds_jack_gmod/liquid_load.ogg", 60, math.random(120, 130))--]]
-				end
+					elseif typ == JMod.EZ_RESOURCE_TYPES.DIRTYWATER then
+    				local Aqua = self:GetWater()
+
+    				if Aqua <= 0 then
+        				local Dmg = DamageInfo()
+        				Dmg:SetDamage(999999)
+        				Dmg:SetDamageType(DMG_GENERIC)
+       					self:TakeDamageInfo(Dmg)
+        				return math.ceil(amt)
+    				end
+
+    				self:SetWater(math.max(0, Aqua - 30))
+    				Accepted = amt
+
+    self:EmitSound("snds_jack_gmod/liquid_load.ogg", 65, math.random(90, 110))
 				if self.ResourceLoaded then self:ResourceLoaded(typ, Accepted) end
 				self.NextRefillTime = Time + 1
 				return math.ceil(Accepted)

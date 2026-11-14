@@ -133,12 +133,12 @@ local function PopulateFriendList(parent, friendList, myself, W, H)
 end
 
 local unitsString, perSecondString = " UNITS", " PER SECOND"
-function JMod.StandardResourceDisplay(typ, amt, maximum, x, y, siz, vertical, font, opacity, rateDisplay, brite)
+function JMod.StandardResourceDisplay(typ, amt, maximum, x, y, siz, vertical, font, opacity, rateDisplay, brite, displayName, icon)
 	font = font or "JMod-Stencil"
 	opacity = opacity or 150
 	brite = brite or 200
 	surface.SetDrawColor(255, 255, 255, opacity)
-	local Mat = JMod.EZ_RESOURCE_TYPE_ICONS[typ] or SpecialIcons[typ]
+	local Mat = icon or JMod.EZ_RESOURCE_TYPE_ICONS[typ] or SpecialIcons[typ]
 	if Mat then
 		surface.SetMaterial(Mat)
 	end
@@ -151,7 +151,7 @@ function JMod.StandardResourceDisplay(typ, amt, maximum, x, y, siz, vertical, fo
 	end
 
 	if vertical then
-		draw.SimpleText(typ, font, x, y - siz / 2 - 10, Col, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
+		draw.SimpleText(displayName or typ, font, x, y - siz / 2 - 10, Col, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
 		draw.SimpleText(UnitText, font, x, y + siz / 2 + 10, Col, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
 	else
 		--[[local typExplode = string.Explode(" ", typ)
@@ -161,7 +161,7 @@ function JMod.StandardResourceDisplay(typ, amt, maximum, x, y, siz, vertical, fo
 		typ = table.concat(typExplode)
 		local fontsize = draw.GetFontHeight(font)
 		draw.DrawText(typ, font, x - siz / 2 - 10, y / #typExplode - fontsize / 2, Col, TEXT_ALIGN_RIGHT)--]]
-		draw.SimpleText(typ, font, x - siz / 2 - 10, y, Col, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+		draw.SimpleText(displayName or typ, font, x - siz / 2 - 10, y, Col, TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
 		draw.SimpleText(UnitText, font, x + siz / 2 + 10, y, Col, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 	end
 end

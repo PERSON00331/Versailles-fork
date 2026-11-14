@@ -19,7 +19,7 @@ ENT.StaticPerfSpecs = {
 	MaxWater = 100,
 	MaxDurability = 100
 }
-ENT.EZconsumes = {JMod.EZ_RESOURCE_TYPES.WATER}
+ENT.EZconsumes = {JMod.EZ_RESOURCE_TYPES.WATER, JMod.EZ_RESOURCE_TYPES.DIRTYWATER}
 ENT.UsableMats = {MAT_DIRT, MAT_SAND, MAT_SLOSH, MAT_GRASS, MAT_SNOW}
 
 function ENT:CustomSetupDataTables()

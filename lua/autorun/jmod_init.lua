@@ -9,6 +9,7 @@ JMod.EZ_STATION_STATE_BUSY = 4
 -- resource definitions --
 JMod.EZ_RESOURCE_TYPES = {
 	WATER = "water",
+	DIRTYWATER = "water",
 	WOOD = "wood",
 	ORGANICS = "organics",
 	OIL = "oil",
@@ -96,6 +97,7 @@ JMod.EZ_RESOURCE_TYPE_ICONS_SMOL[JMod.EZ_RESOURCE_TYPES.FUSIONMATERIAL] = JMod.E
 
 JMod.EZ_RESOURCE_ENTITIES = {
 	[JMod.EZ_RESOURCE_TYPES.WATER] = "ent_jack_gmod_ezwater",
+	[JMod.EZ_RESOURCE_TYPES.DIRTYWATER] = "ent_jack_gmod_ezdirtywater",
 	[JMod.EZ_RESOURCE_TYPES.WOOD] = "ent_jack_gmod_ezwood",
 	[JMod.EZ_RESOURCE_TYPES.ORGANICS] = "ent_jack_gmod_ezorganics",
 	[JMod.EZ_RESOURCE_TYPES.OIL] = "ent_jack_gmod_ezoil",
@@ -227,7 +229,9 @@ JMod.MapSolarPowerModifiers = {
 		0
 	}
 }
-
+-- VIBECODE BOT 9000 READY TO CODE
+-- LOADING GREEN ALIEN FOR PERSON
+-- LOADED.
 -- this table is just a bunch of assumptions
 -- so that we have something to fall back on for camoflauge
 -- obviously hand-picked colors will be better, but hey
