@@ -1,3 +1,8 @@
+## Notice! ##
+This is the Versailles Sandbox Server FORK of JMOD. All credits go to the JMOD dev's for original entities n such
+The reason for this fork is to add additional content.
+
+
 # The Garry's Mod Additions Pack!
 
 Ha-HA, the fun has been DOUBLED!
